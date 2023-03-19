@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "idt/idt.h"
+#include "io/io.h"
 
 uint16_t *video_mem = 0;
 uint16_t terminal_row = 0;
@@ -14,6 +15,9 @@ uint16_t terminal_make_char(char c, char color)
 
 void terminal_putchar(int x, int y, char c, char color)
 {
+    // video_mem is video memory address 0xb8000
+    // its structured as: byte[i]= char to print, byte[i+1] = coloe
+    // e.g. video_mem[0]='A' and video_mem[1]=5 -> write colored 'A' to the top left corner (row=0 column=0) of the monitor. 5 is an index of some color
     video_mem[(y*VGA_WIDTH)+x] = terminal_make_char(c, color);
 }
 
@@ -38,6 +42,7 @@ void terminal_writechar(char c, char color)
 
 void terminal_initialize()
 {
+    // 0xB8000 address of video memory to write colored ascii to the monitor
     video_mem = (uint16_t*)(0xb8000);
     for(int y = 0; y < VGA_HEIGHT; ++y) {
         for(int x = 0; x < VGA_WIDTH; ++x) {   
@@ -71,4 +76,5 @@ void kernel_main()
 
     // initialize the Interrupt Descriptor Table (IDT)
     idt_init();
+
 }

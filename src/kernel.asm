@@ -22,6 +22,20 @@ _start:
     or al, 2
     out 0x92, al    ; write to the processor bus
 
+    ; Remap the master PIC (Programmable Interrupt Control - for IRQs)
+    mov al, 00010001b   ; Put the PIC into initialization mode. for more info refer to the spec
+    out 0x20, al        ; Tell master PIC. ports 0x20 and 0x21 are for the master PIC
+
+    mov al, 0x20        ; Interrupt 0x20 is where IRQ should start
+    out 0x21, al        ; Tell master PIC ports 0x20 and 0x21 are for the master PIC
+
+    mov al, 00000001b   ; Put PIC in x86 mode - more info in the spec
+    out 0x21, al
+    ; End of remappin the master PIC
+
+    ; Enable interrupts
+    sti
+
     call kernel_main
     jmp $
 
