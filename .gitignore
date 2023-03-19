@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# build dir
+build/*.o
+build/idt/*.o
+build/memory/*.o
+
+# bin dir
+bin/*bin
