@@ -1,0 +1,7 @@
+# File: build/.gitignore
+
+# Ignore o files
+*.o
+idt/*.o
+memory/*.o
+io/*.o

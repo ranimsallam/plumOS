@@ -1,10 +1,12 @@
+# File: .gitignore
+
 # Prerequisites
 *.d
 
 # Compiled Object files
 *.slo
 *.lo
-*.o
+#*.o
 *.obj
 
 # Precompiled Headers
@@ -32,9 +34,10 @@
 *.app
 
 # build dir
-build/*.o
-build/idt/*.o
-build/memory/*.o
+#build/*.o
+#build/idt/*.o
+#build/memory/*.o
+#build/io/*.o
 
 # bin dir
-bin/*bin
+#bin/*bin
