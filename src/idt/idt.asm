@@ -6,6 +6,18 @@ extern no_interrupt_handler
 global idt_load         ; export the symbol idt_load in order to use it in .c files
 global int21h
 global no_interrupt
+global enable_interrupts
+global disable_interrupts
+
+; Enable Interrups should be after setting IDT in order to prevent PANIC scenarios
+enable_interrupts:
+    sti
+    ret
+
+; Disable interrupts
+disable_interrupts:
+    cli
+    ret
 
 idt_load:
     push ebp
