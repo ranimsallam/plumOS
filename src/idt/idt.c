@@ -69,7 +69,7 @@ void idt_init()
     // interrupt 0x20 is the timer interrupt after we remap the IRQs to address 0x20
     //idt_set(0x20, int21h);
     // interrupt 0x21 is the keyboard interrupt after we remap the IRQs to address 0x20
-    //idt_set(0x21, int21h);
+    idt_set(0x21, int21h);
 
     // Load IDT
     idt_load(&idtr_descriptor);

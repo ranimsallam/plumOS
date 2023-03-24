@@ -75,10 +75,13 @@ void kernel_main()
     terminal_initialize();
     print("Hello world!\n");
 
-    // initialize the heap
+    // Initialize the heap
     kheap_init();
 
-    // initialize the Interrupt Descriptor Table (IDT)
+    // Initialize the Interrupt Descriptor Table (IDT)
     idt_init();
+
+    // Enable interrupts must be after initializing the IDT in order to prevent PANIC scenarios
+    enable_interrupts();
 
 }
