@@ -1,7 +1,7 @@
 # its a must to have kernel.asm.o as the first file so it will be linked first and when we jmp to kernel code it will be the first to run
 # in linker.ld we decided that we will start loading at 1MB (address 0x100000), since we are linking kernel.asm.o as the first object file,
 # kernel.asm.o will be loaded at address 0x100000
-FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/memory/memory.o ./build/idt/idt.o ./build/io/io.asm.o
+FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/memory/memory.o ./build/idt/idt.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o
 
 # change the include dir to ./src
 INCLUDES = -I./src
@@ -49,9 +49,15 @@ all: ./bin/boot.bin ./bin/kernel.bin
 ./build/io/io.asm.o: ./src/io/io.asm
 	nasm -f elf -g ./src/io/io.asm -o ./build/io/io.asm.o
 
+./build/memory/heap/heap.o: ./src/memory/heap/heap.c
+	i686-elf-gcc $(INCLUDES) -I./src/memory/heap $(FLAGS) -std=gnu99 -c ./src/memory/heap/heap.c -o ./build/memory/heap/heap.o
+
+./build/memory/heap/kheap.o: ./src/memory/heap/kheap.c
+	i686-elf-gcc $(INCLUDES) -I./src/memory/heap $(FLAGS) -std=gnu99 -c ./src/memory/heap/kheap.c -o ./build/memory/heap/kheap.o
+
 clean:
 	rm -rf ./bin/boot.bin
 	rm -rf ./bin/kernel.bin
 	rm -rf ./bin/os.bin
-	rm -rf ${FIILES}
+	rm -rf ${FILES}
 	rm -rf ./build/kernelfull.o
