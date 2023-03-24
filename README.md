@@ -14,3 +14,17 @@ How to:
 
 GCC and dependencies:
 Follow steps: https://wiki.osdev.org/GCC_Cross-Compiler
+
+
+Whats implemented:
+Bootloader
+Tranistion from Real Mode to Protected Mode (32bit)
+Global Descriptor Table (GDT) - intialize and loading
+Interrupt Descriptor Table (IDT) - intialize and loading, setup interrupts, interrupts handlers
+IO Implementation
+Remapping IRQ
+Programmable Interrupt Controller (PIC) Implementation
+Memory basics
+Heap implementation, memalloc(), free()
+Kernel basic functions
+
