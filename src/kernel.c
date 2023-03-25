@@ -4,6 +4,7 @@
 #include "idt/idt.h"
 #include "io/io.h"
 #include "memory/heap/kheap.h"
+#include "memory/paging/paging.h"
 
 uint16_t *video_mem = 0;
 uint16_t terminal_row = 0;
@@ -70,6 +71,9 @@ void print(const char *str)
     }
 }
 
+// directory if 4GB paging
+static struct paging_4gb_chunk* kernel_chunk = 0;
+
 void kernel_main()
 {
     terminal_initialize();
@@ -80,6 +84,27 @@ void kernel_main()
 
     // Initialize the Interrupt Descriptor Table (IDT)
     idt_init();
+
+    // Setup Paging
+    // Create a 4GB chunk of memory that should be writeable and present.
+    // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
+    kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    // Switch to kernel paging chunk - load kernel_directory to cr3
+    paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
+    
+    // allocate memory and translate virtual address 0x1000 to ptr physical address
+    char* ptr = kzalloc(4096);
+    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+
+    // Enable Paging
+    enable_paging();
+
+    // TODO: remove this, used for testing the pagining
+    // char* ptr2 = (char*) 0x1000;
+    // ptr2[0] = 'A';
+    // ptr2[1] = 'B';
+    // print(ptr2);
+    // print(ptr);
 
     // Enable interrupts must be after initializing the IDT in order to prevent PANIC scenarios
     enable_interrupts();

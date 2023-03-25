@@ -6,7 +6,7 @@ global _start         ; export the symbol since we are using it in linker.ld
 extern kernel_main    ; kernel.h kernel_main()
 
 CODE_SEG equ 0x08     ; GDT second entry at offset 0x08 - GDT entry of CODE SEGMENT
-DATA_SEG equ 0x10     ; GDT second entry at offset 0x10 - GDT entry of DATA SEGMENT
+DATA_SEG equ 0x10     ; GDT third entry at offset 0x10 - GDT entry of DATA SEGMENT
 _start:
     mov ax, DATA_SEG    ; initialize all the Data Segments to DATA_SEG (0x10) entry in GDT
     mov ds, ax
