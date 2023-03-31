@@ -5,6 +5,10 @@
 #include "io/io.h"
 #include "memory/heap/kheap.h"
 #include "memory/paging/paging.h"
+#include "disk/disk.h"
+#include "string/string.h"
+#include "fs/pparser.h"
+#include "disk/streamer.h"
 
 uint16_t *video_mem = 0;
 uint16_t terminal_row = 0;
@@ -54,15 +58,6 @@ void terminal_initialize()
     }
 }
 
-size_t strlen(const char* str)
-{
-    size_t len =0;
-    while(str[len]) {
-        len++;
-    }
-    return len;
-}
-
 void print(const char *str)
 {
     size_t len = strlen(str);
@@ -82,11 +77,14 @@ void kernel_main()
     // Initialize the heap
     kheap_init();
 
+    // Search and initialize the disk
+    disk_search_and_init();
+
     // Initialize the Interrupt Descriptor Table (IDT)
     idt_init();
 
     // Setup Paging
-    // Create a 4GB chunk of memory that should be writeable and present.
+    // Create a 4GB chunk of memory that is writeable and present.
     // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
     kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     // Switch to kernel paging chunk - load kernel_directory to cr3
@@ -98,15 +96,14 @@ void kernel_main()
 
     // Enable Paging
     enable_paging();
-
-    // TODO: remove this, used for testing the pagining
-    // char* ptr2 = (char*) 0x1000;
-    // ptr2[0] = 'A';
-    // ptr2[1] = 'B';
-    // print(ptr2);
-    // print(ptr);
-
+    
     // Enable interrupts must be after initializing the IDT in order to prevent PANIC scenarios
     enable_interrupts();
+
+   struct disk_stream* stream = diskstreamer_new(0);
+   diskstreamer_seek(stream, 0x201); // read from byte 0x201
+   unsigned char c = 0;
+   diskstreamer_read(stream, &c, 1); // read 1 byte into c - reading is done from byte position 0x201 which is the first byte in the second sector
+   while(1){}
 
 }

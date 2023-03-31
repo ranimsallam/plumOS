@@ -11,4 +11,7 @@
 #define PLUMOS_HEAP_BLOCK_SIZE 4096
 #define PLUMOS_HEAP_ADDRESS 0x01000000       // choosed this address from free memory in RAM: https://wiki.osdev.org/Memory_Map_(x86)
 #define PLUMOS_HEAP_TABLE_ADDRESS 0x7E00    // choosed this address from free memory in RAM: https://wiki.osdev.org/Memory_Map_(x86)
+
+#define PLUMOS_SECTOR_SIZE 512
+
 #endif  // CONFIG_H
