@@ -9,7 +9,7 @@ struct disk disk;
 // https://wiki.osdev.org/ATA_read/write_sectors
 // ATA commands matrix: https://wiki.osdev.org/ATA_Command_Matrix
 
-// direct disk access through ports
+// Direct disk access through ports
 // lba : logical block address to read from. e.g. lba = 0 first sector on the disk
 // total : total number of block to read
 // buf : load the data to buf
@@ -23,10 +23,10 @@ int disk_read_sector(int lba, int total, void* buf)
     // 0x1F2 Port to send number of sectors to read
     outb(0x1F2, total);
 
-    outb(0x1F3, (unsigned char)(lba & 0xFF)); // 0x1F3 Port to send bit 0 - 7 of LBA
-    outb(0x1F4, (unsigned char)(lba >> 8));   // 0x1F4 Port to send bit 8 - 15 of LBA
-    outb(0x1F5, (unsigned char)(lba >> 16)); //  0x1F5 Port to send bit 16 - 23 of LBA
-    // 0x1F7 Command port - read command is
+    outb(0x1F3, (unsigned char)(lba & 0xFF)); // 0x1F3 Port to send bits 0 - 7 of LBA
+    outb(0x1F4, (unsigned char)(lba >> 8));   // 0x1F4 Port to send bits 8 - 15 of LBA
+    outb(0x1F5, (unsigned char)(lba >> 16)); //  0x1F5 Port to send bits 16 - 23 of LBA
+    // 0x1F7 Command port - read command is 0x20
     outb(0x1F7, 0x20);
 
     // read 2 bytes at a time
@@ -40,7 +40,7 @@ int disk_read_sector(int lba, int total, void* buf)
             c = insb(0x1F7);
         }
 
-        // copy from hardisk to memory
+        // copy sector from hardisk to memory
         // 2 bytes at a time * 256 = 512. sectors size is 512
         for( int i =0; i < 256; ++i) {
             *ptr = insw(0x1F0);
