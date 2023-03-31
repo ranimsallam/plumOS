@@ -1,7 +1,7 @@
 # its a must to have kernel.asm.o as the first file so it will be linked first and when we jmp to kernel code it will be the first to run
 # in linker.ld we decided that we will start loading at 1MB (address 0x100000), since we are linking kernel.asm.o as the first object file,
 # kernel.asm.o will be loaded at address 0x100000
-FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/memory/memory.o ./build/idt/idt.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o
+FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/memory/memory.o ./build/idt/idt.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/fs/pparser.o ./build/string/string.o ./build/disk/streamer.o
 
 # change the include dir to ./src
 INCLUDES = -I./src
@@ -60,6 +60,18 @@ all: ./bin/boot.bin ./bin/kernel.bin
 
 ./build/memory/paging/paging.asm.o: ./src/memory/paging/paging.asm
 	nasm -f elf -g ./src/memory/paging/paging.asm -o ./build/memory/paging/paging.asm.o
+
+./build/disk/disk.o: ./src/disk/disk.c
+	i686-elf-gcc $(INCLUDES) -I./src/disk $(FLAGS) -std=gnu99 -c ./src/disk/disk.c -o ./build/disk/disk.o
+
+./build/fs/pparser.o: ./src/fs/pparser.c
+	i686-elf-gcc $(INCLUDES) -I./src/fs $(FLAGS) -std=gnu99 -c ./src/fs/pparser.c -o ./build/fs/pparser.o
+
+./build/string/string.o: ./src/string/string.c
+	i686-elf-gcc $(INCLUDES) -I./src/string $(FLAGS) -std=gnu99 -c ./src/string/string.c -o ./build/string/string.o
+
+./build/disk/streamer.o: ./src/disk/streamer.c
+	i686-elf-gcc $(INCLUDES) -I./src/disk $(FLAGS) -std=gnu99 -c ./src/disk/streamer.c -o ./build/disk/streamer.o
 
 clean:
 	rm -rf ./bin/boot.bin
