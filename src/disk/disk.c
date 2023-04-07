@@ -11,7 +11,7 @@ struct disk disk;
 
 // Direct disk access through ports
 // lba : logical block address to read from. e.g. lba = 0 first sector on the disk
-// total : total number of block to read
+// total : total number of blocks to read
 // buf : load the data to buf
 // output to ports the lba, total number of blocks to read then initialize a read from the disk
 int disk_read_sector(int lba, int total, void* buf)
@@ -19,7 +19,7 @@ int disk_read_sector(int lba, int total, void* buf)
     // outb - write byte to the port on the bus
     // select master drive and pass part of the LBA
     // 0x1F6 Port to send drive and bit 24 - 27 of LBA
-    outb(0x1F6, (lba << 24) | 0xE0);
+    outb(0x1F6, (lba >> 24) | 0xE0);
     // 0x1F2 Port to send number of sectors to read
     outb(0x1F2, total);
 
@@ -46,9 +46,7 @@ int disk_read_sector(int lba, int total, void* buf)
             *ptr = insw(0x1F0);
             ptr++;
         }
-
     }
-
     return 0;
 }
 
@@ -58,6 +56,12 @@ void disk_search_and_init()
     memset(&disk, 0, sizeof(disk));
     disk.type = PLUMOS_DISK_TYPE_REAL;
     disk.sector_size = PLUMOS_SECTOR_SIZE;
+    disk.id = 0;
+
+    // Set the filesystem - pass our only disk 'disk'
+    // fs_resolve loops through all the filesystems and set the correct filesystem (the one that correspond to disk)
+    // Look at the diagram in file.h
+    disk.filesystem = fs_resolve(&disk);
 }
 
 // return the only disk we have - its index 0

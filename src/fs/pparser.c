@@ -4,6 +4,7 @@
 #include "memory/heap/kheap.h"
 #include "memory/memory.h"
 #include "status.h"
+#include "config.h"
 
 // Check if path format is valid
 static int pathparser_path_valid_format(const char* filename)

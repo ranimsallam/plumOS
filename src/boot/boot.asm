@@ -3,15 +3,46 @@ BITS 16             ; tell the assembler we are using 16 bit arch; it will assem
 
 CODE_SEG equ gdt_code - gdt_start       ; give us offset of gdt_code = 0x08 - GDT entry of CODE SEGMENT
 DATA_SEG equ gdt_data - gdt_start       ; give us offset of gdt_data = 0x10 - GDT entry of DATA SEGMENT
-; some BIOSes have BIOS Parameter Block (BPB). BPB size is 33 bytes
-; in order to prevent the BIOS from corrupting our Bootloader (by writing the BPB) we just skip 33 bytes to save it for BPB that is written by the BIOS
-_start:
-    jmp short start
-    nop
+
+; https://wiki.osdev.org/FAT#BPB_.28BIOS_Parameter_Block.29
+jmp short start
+nop
+
+
+; BIOS Pareameter Block (BPB)
+; FAT16 Header
+; BPB includes FAT info - FAT header
+; https://wiki.osdev.org/FAT#BPB_.28BIOS_Parameter_Block.29
+; https://averstak.tripod.com/fatdox/bootsec.htm
+OEMIdentifier       db 'PLUMOS  '   ; identifies the system that formatted the disk. it shuld be padded with spaces to fill 8 bytes (PLUMOS is 6 chars so pad 2 spaces = 8bytes)
+BytesPerSector      dw 0x200        ; how many bytes long the physical sector is : 0x200 = 512
+SectorsPerCluster   db 0x80         ; how many sectors are in one cluster
+ReservedSector      dw 200          ; 200 reservedd sectors - this sectors are for the Kernel
+NumberOfFATs        db 0x02         ; two FATs, original and backup
+RootDirEntries      dw 0x40         ; number of the entries in the root directory
+NumSectors          dw 0x00         ; total number of sectors on the disk - dont use it, assign 0
+MediaType           db 0xF8         ; Media Type Descriptor https://en.wikipedia.org/wiki/Design_of_the_FAT_file_system#BPB20_OFS_0Ah
+SectorPerFat        dw 0x100        ; number of sectors in one FAT
+SectorsPerTrack     dw 0x20         ; number of sectors per track
+NumberOfHeads       dw 0x40         ; number of sectors grouped under one head
+HiddenSectors       dd 0x00         ; number of hidden sectors. (i.e. the LBA of the beginning of the partition)
+SectorsBig          dd 0x773594     ; large sector count
+
+; Extended BPB (Dos 4.0)
+; https://en.wikipedia.org/wiki/Design_of_the_FAT_file_system#Extended_BIOS_Parameter_Block under Extended BIOS Parameter Block
+; https://en.wikipedia.org/wiki/BIOS_parameter_block
+DriveNumber         db 0x80             ; physical drive number
+WinNTBit            db 0x00             ; FLAGS
+Signature           db 0x29             ; signature is 0x29 of Dos 4.0
+VolumeID            dd 0xD105
+VolumeIDString      db 'PLUMOS BOOT'    ; it must be exactly 11 bytes
+SystemIDString      db 'FAT16   '       ; filesystem type it must be exactly 8 bytes - pad spaces
+
     ; here goes the BIOS PARAMETER BLOCK (BPB)
     ; initialize the BPB bytes with 0, if the BIOS has BPB it will initilize this memory with it without corrupting our Bootloader code
-times 33-($-$$) db 0
+;times 33-($-$$) db 0
 
+; Bootstrap
 start:
     ; init the Code Segment (cs)
     jmp 0:step2     ; this change the code segment = 0x7c00, jmp to execute instruction at CS:IP = 0:step2 = 0x7c00 because we are ORG 0x7c00 in line 1

@@ -6,5 +6,8 @@
 #define EINVARG 2   // Error invalid arg
 #define ENOMEM 3    // Error No Memory
 #define EBADPATH 4  // Error Bad Path
+#define EFSNOTUS 5
+#define ERDONLY 6
+#define EUNIMP 7
 
 #endif // STATUS_H

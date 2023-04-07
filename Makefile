@@ -1,7 +1,7 @@
 # its a must to have kernel.asm.o as the first file so it will be linked first and when we jmp to kernel code it will be the first to run
 # in linker.ld we decided that we will start loading at 1MB (address 0x100000), since we are linking kernel.asm.o as the first object file,
 # kernel.asm.o will be loaded at address 0x100000
-FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/memory/memory.o ./build/idt/idt.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/fs/pparser.o ./build/string/string.o ./build/disk/streamer.o
+FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/memory/memory.o ./build/idt/idt.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o ./build/fs/pparser.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/string/string.o ./build/disk/streamer.o
 
 # change the include dir to ./src
 INCLUDES = -I./src
@@ -10,13 +10,17 @@ FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign
 
 # when all command is run we depend on ./bin/boot.bin: and ./bin/kernel.bin: so it goes through all the labels and resolve them then executes the commands under 'all' label
 # remove ./bin/os.bin at each run since we are appending the bootloader (./bin/boot.bin) and the kernel
-# after appending the kernel, append zero to get it to a sector (sectos size is 512 bytes) append 100 sectors just to be on the safe side
-# so we dont need to calculate kernel_size/512 to know how much sectors the kernel is and append zeros with the same number in order to make sure that all the kernel is loaded - this way we make sure that the whole kernel will be loaded
+# after appending the kernel, append 16MB (1048576*16) of zeros - this 16MB will be used to store our files data (store our files)
 all: ./bin/boot.bin ./bin/kernel.bin
 	rm -rf ./bin/os.bin	
 	dd if=./bin/boot.bin >> ./bin/os.bin
 	dd if=./bin/kernel.bin >> ./bin/os.bin
-	dd if=/dev/zero bs=512 count=100 >> ./bin/os.bin
+	dd if=/dev/zero bs=1048576 count=16 >> ./bin/os.bin
+	sudo mount -t vfat ./bin/os.bin /mnt/d
+#   Copy a file over
+	sudo cp ./hello.txt /mnt/d
+	sudo umount /mnt/d
+
 
 ./bin/kernel.bin: $(FILES)
 # use the linker to link all the object files into one ./build/kernelfull.o
@@ -63,6 +67,12 @@ all: ./bin/boot.bin ./bin/kernel.bin
 
 ./build/disk/disk.o: ./src/disk/disk.c
 	i686-elf-gcc $(INCLUDES) -I./src/disk $(FLAGS) -std=gnu99 -c ./src/disk/disk.c -o ./build/disk/disk.o
+
+./build/fs/file.o: ./src/fs/file.c
+	i686-elf-gcc $(INCLUDES) -I./src/fs $(FLAGS) -std=gnu99 -c ./src/fs/file.c -o ./build/fs/file.o
+
+./build/fs/fat/fat16.o: ./src/fs/fat/fat16.c
+	i686-elf-gcc $(INCLUDES) -I./src/fs -I./src/fs/fat $(FLAGS) -std=gnu99 -c ./src/fs/fat/fat16.c -o ./build/fs/fat/fat16.o
 
 ./build/fs/pparser.o: ./src/fs/pparser.c
 	i686-elf-gcc $(INCLUDES) -I./src/fs $(FLAGS) -std=gnu99 -c ./src/fs/pparser.c -o ./build/fs/pparser.o
