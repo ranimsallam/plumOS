@@ -30,6 +30,7 @@ int diskstreamer_seek(struct disk_stream* stream, int pos)
 int diskstreamer_read(struct disk_stream* stream, void* out, int total)
 {
     // calculate the sector and offset that we should read from
+    // stream->pos is the position in disk we want to read from
     int sector = stream->pos / PLUMOS_SECTOR_SIZE;
     int offset = stream->pos % PLUMOS_SECTOR_SIZE;
     char buf[PLUMOS_SECTOR_SIZE];
@@ -40,16 +41,16 @@ int diskstreamer_read(struct disk_stream* stream, void* out, int total)
         goto out;
     }
 
-    // total bytes to read - if 'total' is more than one sector use SECTOR_SIZE
+    // total bytes to read - if 'total' is more than one sector read one sector
     int total_to_read = total > PLUMOS_SECTOR_SIZE ? PLUMOS_SECTOR_SIZE : total;
     // load 'total_to_read' bytes into 'out'
     for(int i = 0; i < total_to_read; ++i) {
         *(char*)out++ = buf[offset+i];
     }
 
-    // Adjust the stream - pos is the position in the stream
-    stream->pos = total_to_read;
-    // if 'total' is more than 512bytes (1 sector), read the remaining bytes (total-512) recursively
+    // Adjust the stream - pos is the position in the stream, we already read 'total_to_read' bytes so adjust stream->pos to be right after where we finished reading
+    stream->pos += total_to_read;
+    // If 'total' is more than 512bytes (1 sector), read the remaining bytes (total-512) recursively
     if (total > PLUMOS_SECTOR_SIZE ) {
         res = diskstreamer_read(stream, out, total-PLUMOS_SECTOR_SIZE);
     }

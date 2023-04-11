@@ -9,6 +9,7 @@
 #include "string/string.h"
 #include "fs/pparser.h"
 #include "disk/streamer.h"
+#include "fs/file.h"
 
 uint16_t *video_mem = 0;
 uint16_t terminal_row = 0;
@@ -66,6 +67,12 @@ void print(const char *str)
     }
 }
 
+void panic(const char* msg)
+{
+    print(msg);
+    while(1) {}
+}
+
 // directory if 4GB paging
 static struct paging_4gb_chunk* kernel_chunk = 0;
 
@@ -77,7 +84,11 @@ void kernel_main()
     // Initialize the heap
     kheap_init();
 
+    // Initialize filesystems
+    fs_init();
+
     // Search and initialize the disk
+    // Create one primary disk and call filesystem resolve
     disk_search_and_init();
 
     // Initialize the Interrupt Descriptor Table (IDT)
@@ -100,10 +111,15 @@ void kernel_main()
     // Enable interrupts must be after initializing the IDT in order to prevent PANIC scenarios
     enable_interrupts();
 
-   struct disk_stream* stream = diskstreamer_new(0);
-   diskstreamer_seek(stream, 0x201); // read from byte 0x201
-   unsigned char c = 0;
-   diskstreamer_read(stream, &c, 1); // read 1 byte into c - reading is done from byte position 0x201 which is the first byte in the second sector
-   while(1){}
+    int fd = fopen("0:/hello.txt", "r");
+    if (fd) {
+        struct file_stat s;
+        fstat(fd, &s);
+        fclose(fd);
+
+        print("testing\n");
+    }
+    print("\nend\n");
+    while(1){}
 
 }
