@@ -55,6 +55,21 @@ char* strcpy(char* dest, const char* src)
     return res;
 }
 
+char* strncpy(char* dest, const char* src, int count)
+{
+    int  i = 0;
+    // Last char is '\0'
+    for (i = 0; i < count-1; ++i) {
+        if (src[i] == 0x00)
+            break;
+        dest[i] = src[i];
+    }
+
+    // Add '\0'
+    dest[i] = 0x00;
+    return dest;
+}
+
 // insensetive - doesn't care about capital/small letters
 // calls to this funtion is done with n = sizeif(*str2)
 int istrncmp(const char* str1, const char* str2, int n)

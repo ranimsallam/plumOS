@@ -105,12 +105,17 @@ FAT (Directory/File) entry:
     | file size                 |  32 bits
     |___________________________|
 
-
     FAT items are linked-lists, each one has a pointer to the next cluster that includes the next directory or file data:
     next cluster = (high 16bits first cluster << 16) | low 16bits first cluster
 
     attributes - decides if we reached directory/file/EOF
 
+    Example: Accessing a file abc/def/ghi/file.txt:
+    Start from Root Directory
+    Get to the entry ofdirectory 'abc' in Root Directory
+    'abc' directory has pointer to an address in another cluster that includes 'def'
+    'def' directory has pointer to an address in another cluster that includes 'ghi'
+    'ghi' directory has pointer to an address in another cluster that includes file.txt data
 
 */
 

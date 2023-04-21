@@ -60,7 +60,7 @@
 #define PAGING_CACHE_DISABLED  0b00010000    // PCD bit is set - Cache Disabled
 #define PAGING_WRITE_THROUGH   0b00001000    // Write Through bit is set
 #define PAGING_ACCESS_FROM_ALL 0b00000100    // U/S bit is set - User/Supervisor
-#define PAGING_IS_WRITABLE     0b00000010    // R/W bit is set - Read/Write
+#define PAGING_IS_WRITEABLE     0b00000010    // R/W bit is set - Read/Write
 #define PAGING_IS_PRESENT      0b00000001    // Present bit is set
 
 #define PAGING_TOTAL_ENTRIES_PER_TABLE 1024
@@ -68,15 +68,23 @@
 
 
 struct paging_4gb_chunk
-{
+{   // This is the directory
     uint32_t* directory_entry;
 };
 
 struct paging_4gb_chunk* paging_new_4gb(uint8_t flags);
-void paging_switch(uint32_t* directory);
+void paging_switch(struct paging_4gb_chunk* directory);
 void enable_paging();   // dont call enable paging before creating the paging and paging_load_directory to avoid PANIC
-uint32_t* paging_4gb_chunk_get_directory(struct paging_4gb_chunk* chunk);
+
 int paging_set(uint32_t* directory, void* virt, uint32_t val);
 bool paging_is_aligned(void* addr);
+
+uint32_t* paging_4gb_chunk_get_directory(struct paging_4gb_chunk* chunk);
+void paging_free_4gb(struct paging_4gb_chunk* chunk);
+
+int paging_map(struct paging_4gb_chunk* directory, void* vitr, void* phys, int flags);
+int paging_map_range(struct paging_4gb_chunk* directory, void* virt, void* phys, int count, int flags);
+int paging_map_to(struct paging_4gb_chunk* directory, void* virt, void* phys, void* phys_end, int flags);
+void* paging_align_address(void* ptr);
 
 #endif  // PAGING_G
