@@ -3,6 +3,8 @@
 ; since we need this kernel.asm to run at first, we cant link it to .asm section (in linker.ld), it should be part of code section .text
 
 global _start         ; export the symbol since we are using it in linker.ld
+global kernel_registers
+
 extern kernel_main    ; kernel.h kernel_main()
 
 CODE_SEG equ 0x08     ; GDT second entry at offset 0x08 - GDT entry of CODE SEGMENT
@@ -35,6 +37,15 @@ _start:
 
     call kernel_main
     jmp $
+
+; change segment registers to point to kernel data segments
+kernel_registers:
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov gs, ax
+    mov fs, ax
+    ret
 
 ; appending 0 to get to 512 bytes, this is done to assure alignment
 times 512-($ - $$) db 0  

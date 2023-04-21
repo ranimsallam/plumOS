@@ -19,13 +19,13 @@ void kernel_main()
     // Setup Paging
     // Create a 4GB chunk of memory that should be writeable and present.
     // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
-    kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     // Switch to kernel paging chunk - load kernel_directory to cr3
     paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
     
     // allocate memory and translate virtual address 0x1000 to ptr physical address
     char* ptr = kzalloc(4096);
-    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
 
     // Enable Paging
     enable_paging();
@@ -62,13 +62,13 @@ void kernel_main()
     // Setup Paging
     // Create a 4GB chunk of memory that is writeable and present.
     // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
-    kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     // Switch to kernel paging chunk - load kernel_directory to cr3
     paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
     
     // allocate memory and translate virtual address 0x1000 to ptr physical address
     char* ptr = kzalloc(4096);
-    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
 
     // Search and initialize the disk
     disk_search_and_init();
@@ -118,13 +118,13 @@ void kernel_main()
     // Setup Paging
     // Create a 4GB chunk of memory that is writeable and present.
     // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
-    kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     // Switch to kernel paging chunk - load kernel_directory to cr3
     paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
     
     // allocate memory and translate virtual address 0x1000 to ptr physical address
     char* ptr = kzalloc(4096);
-    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
 
     // Enable Paging
     enable_paging();
@@ -178,13 +178,13 @@ void kernel_main()
     // Setup Paging
     // Create a 4GB chunk of memory that is writeable and present.
     // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
-    kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     // Switch to kernel paging chunk - load kernel_directory to cr3
     paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
     
     // allocate memory and translate virtual address 0x1000 to ptr physical address
     char* ptr = kzalloc(4096);
-    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
 
     // Enable Paging
     enable_paging();
@@ -294,13 +294,13 @@ void kernel_main()
     // Setup Paging
     // Create a 4GB chunk of memory that is writeable and present.
     // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
-    kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     // Switch to kernel paging chunk - load kernel_directory to cr3
     paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
     
     // allocate memory and translate virtual address 0x1000 to ptr physical address
     char* ptr = kzalloc(4096);
-    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
 
     // Enable Paging
     enable_paging();
@@ -456,13 +456,13 @@ void kernel_main()
     // Setup Paging
     // Create a 4GB chunk of memory that is writeable and present.
     // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
-    kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     // Switch to kernel paging chunk - load kernel_directory to cr3
     paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
     
     // allocate memory and translate virtual address 0x1000 to ptr physical address
     char* ptr = kzalloc(4096);
-    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
 
     // Enable Paging
     enable_paging();
@@ -509,13 +509,13 @@ void kernel_main()
     // Setup Paging
     // Create a 4GB chunk of memory that is writeable and present.
     // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
-    kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     // Switch to kernel paging chunk - load kernel_directory to cr3
     paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
     
     // allocate memory and translate virtual address 0x1000 to ptr physical address
     char* ptr = kzalloc(4096);
-    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
 
     // Enable Paging
     enable_paging();
@@ -568,13 +568,13 @@ void kernel_main()
     // Setup Paging
     // Create a 4GB chunk of memory that is writeable and present.
     // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
-    kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     // Switch to kernel paging chunk - load kernel_directory to cr3
     paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
     
     // allocate memory and translate virtual address 0x1000 to ptr physical address
     char* ptr = kzalloc(4096);
-    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
 
     // Enable Paging
     enable_paging();
@@ -621,3 +621,92 @@ $2 = {flags = 0, filesize = 12}
 
 
 */
+
+/*
+    Transition to USER SPACE
+    by running blank.bin program as a user task
+
+    void kernel_main()
+{
+    terminal_initialize();
+    print("Hello world!\n");
+
+    // Convert gdt_structured to gdt_real structure which the processor understands
+    memset(gdt_real, 0x00, sizeof(gdt_real));
+    gdt_structured_to_gdt(gdt_real, gdt_structured, PLUMOS_TOTAL_GDT_SEGMENTS);
+    // Load the GDT
+    gdt_load(gdt_real, sizeof(gdt_real));
+
+    // Initialize the heap
+    kheap_init();
+
+    // Initialize filesystems
+    fs_init();
+
+    // Search and initialize the disk
+    // Create one primary disk and call filesystem resolve
+    disk_search_and_init();
+
+    // Initialize the Interrupt Descriptor Table (IDT)
+    idt_init();
+
+    // Setup and load TSS
+    memset(&tss, 0x00, sizeof(tss));
+    tss.esp0 = 0x600000;        // Kernel Stack is located at 0x600000
+    tss.ss0 = KERNEL_DATA_SELECTOR;     //  initialize the kernel Data Selector
+    tss_load(0x28);  // 0x28 is the offset of TSS in GDT (after the NULL, Kernel and User Segments)
+
+    // Setup Paging
+    // Create a 4GB chunk of memory that is writeable and present.
+    // ACCESS_FROM_ALL should be only for Kernel pages but for now allowing access from any privildge level
+    kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    // Switch to kernel paging chunk - load kernel_directory to cr3
+    paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
+    
+    // allocate memory and translate virtual address 0x1000 to ptr physical address
+    char* ptr = kzalloc(4096);
+    paging_set(paging_4gb_chunk_get_directory(kernel_chunk), (void*)0x1000, (uint32_t)ptr | PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+
+    // Enable Paging
+    enable_paging();
+    
+    // load user program blank.bin from drive 0 that we already prepared in the Makefile: sudo cp ./programs/blank/blank.bin /mnt/d
+    // This will transit to ring3 (user space)
+    struct process* process = 0;
+    int res = process_load("0:/blank.bin", &process);
+    if (res != PLUMOS_ALL_OK) {
+        panic("PANIC: Failed to load blank.bin");
+    }
+    task_run_first_ever_task();
+
+    // Enable interrupts must be after initializing the IDT in order to prevent PANIC scenarios
+    //enable_interrupts();
+
+    // int fd = fopen("0:/hello.txt", "r");
+    // if (fd) {
+    //     struct file_stat s;
+    //     fstat(fd, &s);
+    //     fclose(fd);
+
+    //     print("testing\n");
+    // }
+    print("\nend\n");
+    while(1){}
+
+}
+
+see that we are executing at address 0x400000 which we defined as the user program address code (in programs/linker.ld)
+This is the task that we created in blank.asm
+
+make clean
+./build.sh
+gdb
+(gdb) target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio
+(gdb) c
+Ctrl C
+0x00400000 in ?? ()
+(gdb) layout asm
+*/
+
+// add-symbol-file ../build/kernelfull.o 0x100000
+// target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio

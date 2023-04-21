@@ -3,14 +3,19 @@
 #include "memory/memory.h"
 #include "kernel.h"
 #include "io/io.h"
+#include "task/task.h"
 
 struct idt_desc idt_descriptors[PLUMOS_TOTAL_INTERRUPTS];
 struct idtr_desc idtr_descriptor;
 
-// definition in itd.asm - Loadt IDT to tell the process where the IDT is
+// Array of pointers, every kernel command need to be implemented and its pointer is stored in this array at inde=command
+static ISR80H_COMMAND isr80h_commands[PLUMOS_MAX_ISR80H_COMMANDS];
+
+// definition in itd.asm - Load IDT to tell the process where the IDT is
 extern void idt_load(struct idtr_desc* ptr);
 extern void int21h();
 extern void no_interrupt();
+extern void isr80h_wrapper();
 
 void int21h_handler()
 {
@@ -70,7 +75,60 @@ void idt_init()
     //idt_set(0x20, int21h);
     // interrupt 0x21 is the keyboard interrupt after we remap the IRQs to address 0x20
     idt_set(0x21, int21h);
+    
+    // set 0x80 entry to be interrupt for kernel commands
+    idt_set(0x80, isr80h_wrapper);
 
     // Load IDT
     idt_load(&idtr_descriptor);
+}
+
+void isr80h_register_command(int command_id, ISR80H_COMMAND command)
+{
+    if (command_id < 0 || command_id >= PLUMOS_MAX_ISR80H_COMMANDS) {
+        panic("PANIC: idt.c: The command for isr80h is out of bounds");
+    }
+
+    if (isr80h_commands[command_id]) {
+        panic("PANIC: idt.c: Attempting to override an existing kernel command");
+    }
+
+    isr80h_commands[command_id] = command;
+}
+
+void* isr80h_handle_command(int command, struct interrupt_frame* frame)
+{
+    void* result = 0;
+
+    if (command < 0 || command >= PLUMOS_MAX_ISR80H_COMMANDS) {
+        return result;
+    }
+
+    ISR80H_COMMAND command_func = isr80h_commands[command];
+    if (!command_func) {
+        // command not found/ not implemented in kernel
+        return 0;
+    }
+
+    // call the command function
+    result = command_func(frame);
+
+    return result;
+}
+
+void* isr80h_handler(int command, struct interrupt_frame* frame)
+{
+
+    void* res = 0;
+    // switch to kernel page
+    kernel_page();
+
+    // save registers into the task -for multitasking purposes
+    task_current_save_state(frame);
+    res = isr80h_handle_command(command, frame);
+
+    // swtich to task paging
+    task_page();
+
+    return res;
 }

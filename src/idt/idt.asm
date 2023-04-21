@@ -2,12 +2,14 @@ section .asm
 
 extern int21h_handler
 extern no_interrupt_handler
+extern isr80h_handler
 
 global idt_load         ; export the symbol idt_load in order to use it in .c files
 global int21h
 global no_interrupt
 global enable_interrupts
 global disable_interrupts
+global isr80h_wrapper
 
 ; Enable Interrups should be after setting IDT in order to prevent PANIC scenarios
 enable_interrupts:
@@ -45,3 +47,26 @@ no_interrupt:
     popad   ; pop eax, ecx, edx, ebx, original esp, ebp, esi, edi  - restor registers
     sti     ; set interrupts
     iret
+
+isr80h_wrapper:
+    ; Interrupt Frame Start
+    ; interrupt frame already pushed by the processor: ip , cs, flags, sp, ss
+    pushad      ; push the general purpose registers
+    ; Interrupt Frame End
+
+    push esp    ; push the stack pointer so that we are pointing to the interrupt frame in order to acess it (stack frame) later
+
+    push eax    ; push the command code to the stack for isr80h_handler. command code we got from user space that the kernel should invoke
+    call isr80h_handler
+    mov dword[tmp_res], eax ; return value is in eax
+    
+    ; adjust the stack  - return the stack pointer to point where it was pointing before pushing esp and eax (each is 4bytes)
+    add esp, 8
+    ; after adjusting the stack -> Restore general purpose registers for user land
+    popad
+    mov eax, [tmp_res]
+    iretd
+
+section .data
+; Inside here is stored the return result from isr80_handler - it needs to be in the data section
+tmp_res: dd 0

@@ -8,6 +8,7 @@ void paging_load_directory(uint32_t*  directory);
 // current Page Directory
 static uint32_t *current_directory = 0;
 
+// Createthe 4GB paging address space
 struct paging_4gb_chunk* paging_new_4gb(uint8_t flags)
 {
     // create Page Directory of 1024 entries - each entry is 32bit
@@ -32,7 +33,7 @@ struct paging_4gb_chunk* paging_new_4gb(uint8_t flags)
         
         // linear mapping - virtual address X points to physcal address X
         // set PAGE_IS_WRITEABLE so the entire page table is writeable
-        directory[i] = (uint32_t)entry | flags | PAGING_IS_WRITABLE;
+        directory[i] = (uint32_t)entry | flags | PAGING_IS_WRITEABLE;
 
     }
 
@@ -42,10 +43,10 @@ struct paging_4gb_chunk* paging_new_4gb(uint8_t flags)
 }
 
 // Switching between the pages
-void paging_switch(uint32_t* directory)
+void paging_switch(struct paging_4gb_chunk* directory)
 {
-    paging_load_directory(directory);
-    current_directory = directory;
+    paging_load_directory(directory->directory_entry);
+    current_directory = directory->directory_entry;
 }
 
 // Get Directory
@@ -114,5 +115,87 @@ int paging_set(uint32_t* directory, void* virt, uint32_t val)
     uint32_t* table = (uint32_t*)(entry & 0xfffff000);
     table[table_index] = val;
 
+    return res;
+}
+
+void paging_free_4gb(struct paging_4gb_chunk* chunk)
+{
+    for (int i = 0; i < PAGING_TOTAL_ENTRIES_PER_TABLE; ++i) {
+        uint32_t entry = chunk->directory_entry[i];
+        uint32_t* table = (uint32_t*)(entry & 0xfffff000); // lowest 12bits are flags, remove them to get the address of the page
+        kfree(table);
+    }
+    kfree(chunk->directory_entry);
+    kfree(chunk);
+}
+
+// Return aligned address of ptr
+void* paging_align_address(void* ptr)
+{
+    if ((uint32_t)ptr % PAGING_PAGE_SIZE) {
+        // Not aligned, align it to the next page
+        return (void*)((uint32_t)ptr + PAGING_PAGE_SIZE - (uint32_t)ptr % PAGING_PAGE_SIZE);
+    }
+
+    return ptr;
+}
+
+// Map virt to phys with flags by calling paging_set
+int paging_map(struct paging_4gb_chunk* directory, void* virt, void* phys, int flags)
+{
+    if ( ((unsigned int)virt % PAGING_PAGE_SIZE) || ((unsigned int)phys % PAGING_PAGE_SIZE) ) {
+        // virtual address or physical address is not page aligned
+        return -EINVARG;
+    }
+    return paging_set(directory->directory_entry, virt, (uint32_t)phys | flags);
+}
+
+// Map a whole range
+// count: how many pages to map starting from phys address
+int paging_map_range(struct paging_4gb_chunk* directory, void* virt, void* phys, int count, int flags)
+{
+    int res = 0;
+
+    for (int i = 0; i < count; ++i) {
+        res = paging_map(directory, virt, phys, flags);
+        if (res < 0) {
+            break;
+        }
+        virt += PAGING_PAGE_SIZE;
+        phys += PAGING_PAGE_SIZE;
+    }
+    return res;
+}
+
+// Map a whole range: phys..phys_end
+// calculate the number of pages needed to map range [phys..phys_end] and call paging_map_range
+int paging_map_to(struct paging_4gb_chunk* directory, void* virt, void* phys, void* phys_end, int flags)
+{
+    int res = 0;
+    if ( (uint32_t)virt % PAGING_PAGE_SIZE) {
+        res = -EINVARG;
+        goto out;
+    }
+
+    if ( (uint32_t)phys % PAGING_PAGE_SIZE) {
+        res = -EINVARG;
+        goto out;
+    }
+
+    if ( (uint32_t)phys_end % PAGING_PAGE_SIZE) {
+        res = -EINVARG;
+        goto out;
+    }
+
+    if ( (uint32_t)phys_end < (uint32_t)phys) {
+        res = -EINVARG;
+        goto out;
+    }
+
+    uint32_t total_bytes = phys_end - phys;
+    int total_pages = total_bytes / PAGING_PAGE_SIZE;
+    res = paging_map_range(directory, virt, phys, total_pages, flags);
+
+out:
     return res;
 }

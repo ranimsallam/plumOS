@@ -4,8 +4,8 @@ OUTPUT_FORMAT(binary)
 SECTIONS
 {
     /*The linker creates addresses base on this origin*/
-    . = 1M;      /* the sections will start at 1MB in memory so our first code is the Kernel and will be loaded into 0x100000 (1MB) in memory (before address 1MB is for the bootloader)*/
-                 /* in other words, the code section .text will be at 0x100000 and since kernel.asm is the first to run it will be part of .text */
+    . = 0x400000;      /* map user programs at virtual address 0x400000 - config.h PLUMOS_PROGRAM_VIRTUAL_ADDRESS 0x400000*/
+
     .text : ALIGN(4096)      /* Define the text section*/
     {
         *(.text)

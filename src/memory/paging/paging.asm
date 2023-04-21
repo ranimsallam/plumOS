@@ -9,7 +9,7 @@ global enable_paging
 paging_load_directory:
     push ebp            ; push stack frame
     mov ebp, esp
-    mov eax, [ebp+8]    ; mov into eax the pointer of the directory that is passed as arg to the function
+    mov eax, [ebp+8]    ; mov into eax the pointer of the directory pages that is passed as arg to the function
     mov cr3, eax        ; mov the directory pointer into cr3 as cr3 should contain the address of the Page Directory
     pop ebp
     ret
