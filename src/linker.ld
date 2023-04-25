@@ -11,6 +11,12 @@ SECTIONS
         *(.text)
     }
 
+    /*its important to have .asm before the data, since the data may not be aligned and by putting .asm here, the data will not interfere with other .asm and mess the alignment*/
+    .asm : ALIGN(4096)      /* Define asm section*/
+    {
+        *(.asm)
+    }
+
     .rodata : ALIGN(4096)    /* Define read-only data*/
     {
         *(.rodata)
@@ -27,11 +33,6 @@ SECTIONS
         *(.bss)
     }
 
-    /*its important to have .asm at the end here, since what we have inside .asm is not aligned and by putting it at the end it will not interfere with other sections and mess their alignment*/
-    .asm : ALIGN(4096)      /* Define asm section*/
-    {
-        *(.asm)
-    }
 }
 
 /* Now when we link the object files together, linker ensures that the origin starts at 1MB (0x100000) */
