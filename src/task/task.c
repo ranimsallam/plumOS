@@ -3,8 +3,10 @@
 #include "status.h"
 #include "process.h"
 #include "memory/memory.h"
+#include "memory/paging/paging.h"
 #include "memory/heap/kheap.h"
 #include "idt/idt.h"
+#include "string/string.h"
 
 // The current task that is running
 struct task* current_task = 0;
@@ -132,6 +134,52 @@ void task_save_state(struct task* task, struct interrupt_frame* frame)
     task->registers.esi = frame->esi;
 }
 
+// Copy memory from user space into kernel space
+// Use 'tmp' memory that is mapped to the same phyical address in Kernel Space and User(task) space in order to copy
+// 'virtual' cannot access from kernel because its mapped in the process address space
+// so create memory 'tmp' that will be shared with the task's memory by using paging
+int copy_string_from_task(struct task* task, void* virtual, void* phys, int max)
+{
+    if (max >= PAGING_PAGE_SIZE) {
+        return -EINVARG;
+    }
+
+    int res = 0;
+    char* tmp = kzalloc(max);
+    if (!tmp) {
+        res = -ENOMEM;
+        goto out;
+    }
+
+    uint32_t* task_directory = task->page_directory->directory_entry;
+    // get the entry of 'tmp' from the task's address space
+    uint32_t old_entry = paging_get(task_directory, tmp);
+
+    // map the virt address 'tmp' to physical address 'tmp'
+    paging_map(task->page_directory, tmp, tmp, PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    // switch to the task's pages
+    paging_switch(task->page_directory);
+    // copy from the virtual address to 'tmp' - now user space and kernel space see the same physical memory of tmp
+    strncpy(tmp, virtual, max);
+    // swtich to kernel pages
+    kernel_page();
+
+    // restore the old task old entry (that was before we changed the mapping in order to copy)
+    res = paging_set(task_directory, tmp, old_entry);
+    if( res < 0) {
+        res = -EIO;
+        goto out_free;
+    }
+
+    strncpy(phys, tmp, max);
+
+out_free:
+    kfree(tmp);
+
+out:
+    return res;
+}
+
 // Need to be called from kernel space
 void task_current_save_state(struct interrupt_frame* frame)
 {
@@ -144,15 +192,29 @@ void task_current_save_state(struct interrupt_frame* frame)
 }
 
 // When there is interrupt in user space, the kernel will be called so we will need to access the kernel pages (page directories) to handle the interrupt
-// but after handling the interrupt we should go back to user space and load back the page directories of the task that caused the interrupt
+// and after handling the interrupt we should go back to user space and load back the page directories of the task that caused the interrupt
 // we will do that by setting the user space registers and loading the task's pages
 int task_page()
 {
+    // change all the segment registers to user data segment registers by loading the segment from gdt
     user_registers();
+    // switch to current task
     task_switch(current_task);
     return 0;
 }
 
+// Switch the paging to the task's pages
+int task_page_task(struct task* task)
+{
+    // Switch the segment registers to registers of User Space
+    user_registers();
+    paging_switch(task->page_directory);
+    return 0;
+}
+
+/* Run First Task
+    run the task_head
+*/
 void task_run_first_ever_task()
 {
     if (!current_task) {
@@ -190,4 +252,26 @@ int task_init(struct task* task, struct process* process)
 
     task->process = process;
     return 0;
+}
+
+// Get item from the task's stack (from kernel space)
+// index: the index in the stack that the item at
+void* task_get_stack_item(struct task* task, int index)
+{
+    void* result = 0;
+
+    // Get the stack pointer to of the task
+    // we saved the task state when interrupt occurred, so we can get the task's stack virtual address
+    uint32_t* sp_ptr = (uint32_t*)task->registers.esp;
+
+    // Switch the paging to the task's pages in order to access the task's stack (esp)
+    task_page_task(task);
+
+    // Get the item at 'index' from the stack
+    result = (void*)sp_ptr[index];
+
+    // Switch back to kernel page
+    kernel_page();
+
+    return result;
 }

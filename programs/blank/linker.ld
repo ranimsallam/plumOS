@@ -11,6 +11,12 @@ SECTIONS
         *(.text)
     }
 
+     /*its important to have .asm at the end here, since what we have inside .asm is not aligned and by putting it at the end it will not interfere with other sections and mess their alignment*/
+    .asm : ALIGN(4096)      /* Define asm section*/
+    {
+        *(.asm)
+    }
+
     .rodata : ALIGN(4096)    /* Define read-only data*/
     {
         *(.rodata)
@@ -25,12 +31,6 @@ SECTIONS
     {
         *(COMMON)
         *(.bss)
-    }
-
-    /*its important to have .asm at the end here, since what we have inside .asm is not aligned and by putting it at the end it will not interfere with other sections and mess their alignment*/
-    .asm : ALIGN(4096)      /* Define asm section*/
-    {
-        *(.asm)
     }
 }
 

@@ -708,5 +708,31 @@ Ctrl C
 (gdb) layout asm
 */
 
+/*
+    Tested accessing the task's stack and calling int 0x80 with command=0 (SUM)
+    By changing blanks.asm:
+
+    _start:
+
+    push 20
+    push 30
+    mov eax, 0  ; commadn 0 SUM - eax is used for commands to tell the kernel which command to run
+    int 0x80
+    add esp, 8  ; restore the stack 8 = 4bytes for each push (20 and 30)
+    jmp $
+
+make clean
+./build.sh
+gdb
+# break on the adderss that the user program loaded to (0x400000)
+(gdb) break *0x400000
+(gdb) target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio
+(gdb) layout asm
+# break on the next RIP after 'int 0x80' (break on the instruction after we return from the kernel handler)
+# print eax which includes the return value of the kernel command SUM: should see50 since we pushed to the stack 20 and 30
+(gdb)print $eax
+$1 = 50
+*/
+
 // add-symbol-file ../build/kernelfull.o 0x100000
 // target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio

@@ -112,7 +112,7 @@ struct gdt_structured gdt_structured[PLUMOS_TOTAL_GDT_SEGMENTS] = {
 void kernel_main()
 {
     terminal_initialize();
-    print("Hello world!\n");
+    //print("Hello world!\n");
 
     // Convert gdt_structured to gdt_real structure which the processor understands
     memset(gdt_real, 0x00, sizeof(gdt_real));
