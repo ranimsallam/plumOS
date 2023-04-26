@@ -1,6 +1,7 @@
 #include "streamer.h"
 #include "memory/heap/kheap.h"
 #include "config.h"
+#include <stdbool.h>
 
 struct disk_stream* diskstreamer_new(int disk_id)
 {
@@ -33,7 +34,16 @@ int diskstreamer_read(struct disk_stream* stream, void* out, int total)
     // stream->pos is the position in disk we want to read from
     int sector = stream->pos / PLUMOS_SECTOR_SIZE;
     int offset = stream->pos % PLUMOS_SECTOR_SIZE;
+    
+    int total_to_read = total; // total bytes to read - if 'total' is more than one sector read one sector
+    bool overflow = (offset + total_to_read) >= PLUMOS_SECTOR_SIZE;
     char buf[PLUMOS_SECTOR_SIZE];
+
+    if (overflow) {
+        // remove the overflowed part and read to the end of the sector (read 'total_to_read' bytes)
+        // e.g. sector_size=512 , offset=400 total_to_read=200 -> total_to_read=112
+        total_to_read -= (offset+total_to_read) - PLUMOS_SECTOR_SIZE;
+    }
 
     // load 1 'sector' into buf (512 bytes)
     int res = disk_read_block(stream->disk, sector, 1, buf);
@@ -41,8 +51,6 @@ int diskstreamer_read(struct disk_stream* stream, void* out, int total)
         goto out;
     }
 
-    // total bytes to read - if 'total' is more than one sector read one sector
-    int total_to_read = total > PLUMOS_SECTOR_SIZE ? PLUMOS_SECTOR_SIZE : total;
     // load 'total_to_read' bytes into 'out'
     for(int i = 0; i < total_to_read; ++i) {
         *(char*)out++ = buf[offset+i];
@@ -50,9 +58,9 @@ int diskstreamer_read(struct disk_stream* stream, void* out, int total)
 
     // Adjust the stream - pos is the position in the stream, we already read 'total_to_read' bytes so adjust stream->pos to be right after where we finished reading
     stream->pos += total_to_read;
-    // If 'total' is more than 512bytes (1 sector), read the remaining bytes (total-512) recursively
-    if (total > PLUMOS_SECTOR_SIZE ) {
-        res = diskstreamer_read(stream, out, total-PLUMOS_SECTOR_SIZE);
+    // If overflowed the buffer, read the remaining bytes recursively
+    if (overflow) {
+        res = diskstreamer_read(stream, out, total-total_to_read);
     }
 
 out:

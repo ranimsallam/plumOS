@@ -5,19 +5,21 @@
 #include "io/io.h"
 #include "memory/heap/kheap.h"
 #include "memory/paging/paging.h"
-#include "memory/memory.h"
-#include "disk/disk.h"
-#include "string/string.h"
-#include "fs/pparser.h"
+#include "keyboard/keyboard.h"
 #include "disk/streamer.h"
+#include "memory/memory.h"
+#include "string/string.h"
+#include "task/process.h"
+#include "isr80h/isr80h.h"
+#include "disk/disk.h"
+#include "fs/pparser.h"
 #include "fs/file.h"
 #include "gdt/gdt.h"
 #include "config.h"
 #include "task/tss.h"
 #include "task/task.h"
-#include "task/process.h"
-#include "isr80h/isr80h.h"
 #include "status.h"
+
 
 uint16_t *video_mem = 0;
 uint16_t terminal_row = 0;
@@ -31,17 +33,45 @@ uint16_t terminal_make_char(char c, char color)
 void terminal_putchar(int x, int y, char c, char color)
 {
     // video_mem is video memory address 0xb8000
-    // its structured as: byte[i]= char to print, byte[i+1] = coloe
+    // its structured as: byte[i]= char to print, byte[i+1] = color
     // e.g. video_mem[0]='A' and video_mem[1]=5 -> write colored 'A' to the top left corner (row=0 column=0) of the monitor. 5 is an index of some color
     video_mem[(y*VGA_WIDTH)+x] = terminal_make_char(c, color);
 }
 
+// Implement a backspace
+void terminal_backspace()
+{
+    if (terminal_row == 0 && terminal_col == 0) {
+        // Cant go back, nothing to remove, just return
+        return;
+    }
+
+    if (terminal_col == 0) {
+        // backspace when we are at the begining of a line:
+        // back to the end of previous line
+        terminal_row -= 1;
+        terminal_col = VGA_WIDTH;
+    }
+
+    // Backspace: insert space to the last char
+    terminal_col -= 1;
+    terminal_writechar(' ', 15);
+    // Update the col in order to override the space in the next writing
+    terminal_col -= 1;
+}
+
 void terminal_writechar(char c, char color)
 {
-    // implement '\n' to start a new line
+    // Implement '\n' to start a new line
     if (c == '\n') {
         terminal_row += 1;
         terminal_col = 0;
+        return;
+    }
+
+    // Implement a backspace
+    if (c == 0x08) {
+        terminal_backspace();
         return;
     }
 
@@ -156,17 +186,23 @@ void kernel_main()
     // Register the kernel commands
     isr80h_register_commands();
 
+    // Initialize all the system's keyboards
+    keyboard_init();
+    
+    // Enable interrupts must be after initializing the IDT in order to prevent PANIC scenarios
+    // No need to enable it, we enabled interrupts when we tranitioned to user space (task.asm)
+    // enable_interrupts();
+
     // load user program blank.bin from drive 0 that we already prepared in the Makefile: sudo cp ./programs/blank/blank.bin /mnt/d
     // This will transit to ring3 (user space)
     struct process* process = 0;
-    int res = process_load("0:/blank.bin", &process);
+    int res = process_load_switch("0:/blank.bin", &process);
     if (res != PLUMOS_ALL_OK) {
         panic("PANIC: Failed to load blank.bin");
     }
+
     task_run_first_ever_task();
 
-    // Enable interrupts must be after initializing the IDT in order to prevent PANIC scenarios
-    //enable_interrupts();
 
     // int fd = fopen("0:/hello.txt", "r");
     // if (fd) {
