@@ -767,6 +767,29 @@ Breakpoint 1, kernel_main () at ./src/kernel.c:179
 $1 = {buffer = "A", '\000' <repeats 1022 times>, tail = 1, head = 0}
 */
 
+/*
+
+In kernel.c
+struct process* process = 0;
+    int res = process_load_switch("0:/blank.elf", &process);
+    if (res != PLUMOS_ALL_OK) {
+        panic("PANIC: Failed to load blank.elf");
+    }
+
+    task_run_first_ever_task();
+
+
+$ gdb
+(gdb) break *0x400000
+Breakpoint 1 at 0x400000
+(gdb) target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio
+(gdb) c
+
+See it breaks on 0x400000 which is the program blank.asm starting address
+(gdb) layout asm
+See that it goes to blank.asm program
+
+*/
 
 // add-symbol-file ../build/kernelfull.o 0x100000
 // target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio

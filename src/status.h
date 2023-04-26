@@ -10,5 +10,6 @@
 #define ERDONLY 6   // Error Read Only
 #define EUNIMP 7   // Error Unimplemnted
 #define EISTKN 8 // Error Is Taken
+#define EINVFORMAT 9 // Error Invalid Format
 
 #endif // STATUS_H

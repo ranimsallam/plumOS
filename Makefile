@@ -1,7 +1,7 @@
 # its a must to have kernel.asm.o as the first file so it will be linked first and when we jmp to kernel code it will be the first to run
 # in linker.ld we decided that we will start loading at 1MB (address 0x100000), since we are linking kernel.asm.o as the first object file,
 # kernel.asm.o will be loaded at address 0x100000
-FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/memory/memory.o ./build/idt/idt.o ./build/keyboard/keyboard.o ./build/keyboard/classic.o ./build/io/io.asm.o ./build/task/process.o ./build/task/tss.asm.o ./build/isr80h/isr80h.o ./build/isr80h/io.o ./build/isr80h/misc.o ./build/task/task.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/task/task.o ./build/memory/paging/paging.asm.o ./build/gdt/gdt.o ./build/gdt/gdt.asm.o ./build/disk/disk.o ./build/fs/pparser.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/string/string.o ./build/disk/streamer.o
+FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/memory/memory.o ./build/idt/idt.o ./build/keyboard/keyboard.o ./build/keyboard/classic.o ./build/loader/formats/elf.o ./build/loader/formats/elfloader.o ./build/io/io.asm.o ./build/task/process.o ./build/task/tss.asm.o ./build/isr80h/isr80h.o ./build/isr80h/io.o ./build/isr80h/misc.o ./build/task/task.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/task/task.o ./build/memory/paging/paging.asm.o ./build/gdt/gdt.o ./build/gdt/gdt.asm.o ./build/disk/disk.o ./build/fs/pparser.o ./build/fs/file.o ./build/fs/fat/fat16.o ./build/string/string.o ./build/disk/streamer.o
 
 # change the include dir to ./src
 INCLUDES = -I./src
@@ -21,7 +21,8 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 	sudo mount -t vfat ./bin/os.bin /mnt/d
     # Copy a file over
 	sudo cp ./hello.txt /mnt/d
-	sudo cp ./programs/blank/blank.bin /mnt/d
+    # sudo cp ./programs/blank/blank.bin /mnt/d
+	sudo cp ./programs/blank/blank.elf /mnt/d
 	sudo umount /mnt/d
 
 
@@ -48,6 +49,16 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 ./build/gdt/gdt.asm.o: ./src/gdt/gdt.asm
 	nasm -f elf -g ./src/gdt/gdt.asm -o ./build/gdt/gdt.asm.o
 
+./build/gdt/gdt.o: ./src/gdt/gdt.c
+# invoke the C compiler
+	i686-elf-gcc $(INCLUDES) -I./src/gdt $(FLAGS) -std=gnu99 -c ./src/gdt/gdt.c -o ./build/gdt/gdt.o
+
+./build/loader/formats/elf.o: ./src/loader/formats/elf.c
+	i686-elf-gcc $(INCLUDES) -I./src/loader/formats $(FLAGS) -std=gnu99 -c ./src/loader/formats/elf.c -o ./build/loader/formats/elf.o
+
+./build/loader/formats/elfloader.o: ./src/loader/formats/elfloader.c
+	i686-elf-gcc $(INCLUDES) -I./src/loader/formats $(FLAGS) -std=gnu99 -c ./src/loader/formats/elfloader.c -o ./build/loader/formats/elfloader.o
+
 ./build/isr80h/isr80h.o: ./src/isr80h/isr80h.c
 	i686-elf-gcc $(INCLUDES) -I./src/isr80h $(FLAGS) -std=gnu99 -c ./src/isr80h/isr80h.c -o ./build/isr80h/isr80h.o
 
@@ -66,10 +77,6 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 ./build/idt/idt.o: ./src/idt/idt.c
 # invoke the C compiler
 	i686-elf-gcc $(INCLUDES) -I./src/idt $(FLAGS) -std=gnu99 -c ./src/idt/idt.c -o ./build/idt/idt.o
-
-./build/gdt/gdt.o: ./src/gdt/gdt.c
-# invoke the C compiler
-	i686-elf-gcc $(INCLUDES) -I./src/gdt $(FLAGS) -std=gnu99 -c ./src/gdt/gdt.c -o ./build/gdt/gdt.o
 
 ./build/memory/memory.o: ./src/memory/memory.c
 # invoke the C compiler

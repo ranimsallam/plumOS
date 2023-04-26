@@ -78,6 +78,7 @@ void enable_paging();   // dont call enable paging before creating the paging an
 
 int paging_set(uint32_t* directory, void* virt, uint32_t val);
 bool paging_is_aligned(void* addr);
+void* paging_align_to_lower_page(void* addr);
 
 uint32_t* paging_4gb_chunk_get_directory(struct paging_4gb_chunk* chunk);
 void paging_free_4gb(struct paging_4gb_chunk* chunk);

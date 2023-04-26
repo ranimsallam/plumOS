@@ -140,6 +140,14 @@ void* paging_align_address(void* ptr)
     return ptr;
 }
 
+// Return the address aligned to the lower page
+void* paging_align_to_lower_page(void* addr)
+{
+    uint32_t _addr = (uint32_t)addr;
+    _addr -= (_addr % PAGING_PAGE_SIZE);
+    return (void*)_addr;
+}
+
 // Map virt to phys with flags by calling paging_set
 int paging_map(struct paging_4gb_chunk* directory, void* virt, void* phys, int flags)
 {

@@ -24,6 +24,12 @@ Each processor has:
     8. Keyboard Buffer: Queue for the process to store keyboard inputs
 
 */
+
+#define PROCESS_FILETYPE_ELF 0
+#define PROCESS_FILETYPE_BINARY 1
+
+typedef unsigned char PROCESS_FILETYPE;
+
 // define how kernel see the process
 struct process
 {
@@ -40,8 +46,16 @@ struct process
     // this allow us to free all the allocations when the process will be terminated in order to avoid memory leak
     void* allocations[PLUMOS_MAX_PROGRAM_ALLOCATIONS];
 
-    // The physical pointer to the process memory, where we load the program to
-    void* ptr;
+    // File type to load. Binary or ELF
+    PROCESS_FILETYPE filetype;
+
+    // Either load a binary file or ELF file
+    union {
+        // The physical pointer to the process memory, where we load the binary program to
+        void* ptr;
+        // ELF file to be loaded
+        struct elf_file* elf_file; 
+    };
 
     // The physical pointer to the stack
     void* stack;
