@@ -734,5 +734,39 @@ gdb
 $1 = 50
 */
 
+
+
+/*
+    Push to keyboard
+
+    in kernel.c added:
+
+      struct process* process = 0;
+    int res = process_load_switch("0:/blank.bin", &process);
+    if (res != PLUMOS_ALL_OK) {
+        panic("PANIC: Failed to load blank.bin");
+    }
+
+    keyboard_push('A');
+
+
+(gdb)add symbol table from file "../build/kernelfull.o" at
+        .text_addr = 0x100000
+(y or n) y
+Reading symbols from ../build/kernelfull.o...
+(gdb) break kernel.c:179
+(gdb) target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio
+(gdb) c
+Continuing.
+
+Breakpoint 1, kernel_main () at ./src/kernel.c:179
+179         keyboard_push('A');
+(gdb) next
+181         task_run_first_ever_task();
+(gdb) print process->keyboard
+$1 = {buffer = "A", '\000' <repeats 1022 times>, tail = 1, head = 0}
+*/
+
+
 // add-symbol-file ../build/kernelfull.o 0x100000
 // target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio

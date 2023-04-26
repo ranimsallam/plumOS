@@ -7,7 +7,7 @@ global task_return
 global user_registers
 
 ; void task_return(struct register* regs);
-; accessing user land is done by 'faulting an interrupt', we push the registers into the stack and call iret so the processor
+; accessing user land is done by 'faulting an interrupt', we push the registers into the stack, update the segment registers and call iret so the processor
 ; will handle it as it was an interrupt: popping everything we pushed into the stack and transit to user space
 task_return:
     mov ebp, esp
@@ -28,7 +28,7 @@ task_return:
     pushf
     pop eax
     or eax, 0x200 ; enable interrupts bit in order to execute iret
-    pushf
+    push eax
 
     ; push code segment
     push dword [ebx+32]

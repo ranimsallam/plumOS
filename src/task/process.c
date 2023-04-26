@@ -25,6 +25,12 @@ struct process* process_current()
     return current_process;
 }
 
+int process_switch(struct process* process)
+{
+    current_process = process;
+    return 0;
+}
+
 // Get process from index
 struct process* process_get(int process_id)
 {
@@ -128,6 +134,16 @@ int process_get_free_slot()
             return i;
     }
     return EISTKN;
+}
+
+// Load process and switch to it
+int process_load_switch(const char* filename, struct process** process)
+{
+    int res = process_load(filename, process);
+    if (res == 0) {
+        process_switch(*process);
+    }
+    return res;
 }
 
 // Load process

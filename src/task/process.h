@@ -21,6 +21,7 @@ Each processor has:
     5. Pointer to the physical that the program is loaded to
     6. Pointer to the stack that the process uses to execute
     7. Size of the program's data ( the size of the bin file that was loaded to execute)
+    8. Keyboard Buffer: Queue for the process to store keyboard inputs
 
 */
 // define how kernel see the process
@@ -47,8 +48,19 @@ struct process
 
     // The size of the data pointed to by ptr (data of the program)
     uint32_t size;
+
+    // Keyboard buffer of the process - Queue
+    struct keyboard_buffer {
+        char buffer[PLUMOS_KEYBOARD_BUFFER_SIZE];
+        int tail;
+        int head;
+    } keyboard;
 };
 
+struct process* process_current();
+int process_switch(struct process* process);
 int process_load_for_slot(const char* filename, struct process** process, int process_slot);
+int process_load_switch(const char* filename, struct process** process);
 int process_load(const char* filename, struct process** process);
+
 #endif // PROCESS_H
