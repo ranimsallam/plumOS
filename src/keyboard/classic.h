@@ -7,6 +7,20 @@
 */
 
 /*
+
+    Interrupt 0x21 is the keyboard interrupt
+    Register the interrupt 0x21 handler as classic_keyboard_handle_interrupt which is the driver's function to handle keyboard pressing
+
+    classic_keyboard_handle_interrupt
+        Switch to kernel pages
+        Read the scancode of the pressed key from the keyboard input port (0x60)
+        Cast the scancode to char based on the PS/2 chars Table
+        Push the char into the Process'es keyboard buffer (Queue)
+        Switch back to task's pages
+*/
+
+
+/*
 https://wiki.osdev.org/%228042%22_PS/2_Controller#PS.2F2_Controller_IO_Ports
  IO port 0x64 Command Register
  Command 0xAE: Enable first PS/2 port	

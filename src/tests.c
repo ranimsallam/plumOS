@@ -791,5 +791,51 @@ See that it goes to blank.asm program
 
 */
 
+
+
+/*
+    Test process_malloc
+blank.c: 
+    int main(int argc, char** argv)
+    {
+        print("Hello, how are you\n");
+
+        void* ptr = malloc(512);
+        if (ptr) {
+
+        }
+
+        while(1) {
+            if (getkey() != 0) {
+                print("key was pressed\n");
+            }
+        }
+        return 0;
+    }
+
+make clean
+./build
+cd bin
+gdb
+(gdb) add-symbol-file ../programs/blank/blank.elf 0x400000
+(gdb) break main
+Breakpoint 1 at 0x400000: file ./blank.c, line 5.
+(gdb) target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio
+Breakpoint 1, main (argc=0, argv=0x0) at ./blank.c:5
+5       {
+(gdb) next
+6           print("Hello, how are you\n");
+(gdb) next
+8           void* ptr = malloc(512);
+(gdb) 
+14              if (getkey() != 0) {
+(gdb) print ptr
+$1 = (void *) 0x1819000
+
+*/
+
+
 // add-symbol-file ../build/kernelfull.o 0x100000
 // target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio
+
+// add-symbol-file ../programs/blank/blank.elf 0x400000
