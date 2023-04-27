@@ -7,6 +7,7 @@
 #include "memory/memory.h"
 #include "memory/heap/kheap.h"
 #include "memory/paging/paging.h"
+#include "loader/formats/elfloader.h"
 
 // The current process that is running
 struct process* current_process = 0;
@@ -73,6 +74,8 @@ static int process_load_binary(const char* filename, struct process* process)
         goto out;
     }
 
+    // Loading binary is by setting the entire bin file into memory and update the program pointer in process
+    process->filetype = PROCESS_FILETYPE_BINARY;
     process->ptr = program_data_ptr;
     process->size = stat.filesize;
 
@@ -81,12 +84,34 @@ out:
     return res;
 }
 
+static int process_load_elf(const char* filename, struct process* process)
+{
+    int res = 0;
+    struct elf_file* elf_file = 0;
+    
+    // Load the ELF file
+    res = elf_load(filename, &elf_file);
+    if (ISERR(res)) {
+        goto out;
+    }
+
+    process->filetype = PROCESS_FILETYPE_ELF;
+    process->elf_file = elf_file;
+
+out:
+    return res;
+}
+
 // Load process/program data
 static int process_load_data(const char* filename, struct process* process)
 {
     int res = 0;
-    // process is a binary file
-    res = process_load_binary(filename, process);
+    res = process_load_elf(filename, process);
+    // If not an elf file, assume its binary
+    if (res == -EINVFORMAT) {
+        // process is a binary file
+        res = process_load_binary(filename, process);
+    }
     return res;
 }
 
@@ -94,29 +119,83 @@ static int process_load_data(const char* filename, struct process* process)
 int process_map_binary(struct process* process)
 {
     int res = 0;
-    // Map the process memory
-    // Map a whole range: virtual = (PLUMOS_PROGRAM_VIRTUAL_ADDRESS + process->size) TO physical = (process->ptr + process->size)
-    // Paging directory of the process: process->task->page_directory->directory_entry
-    // Physical address: process->ptr , pointer to physical memory, where we loaded the program to
-    // End address (end of range to be mapped): paging_align_address(process->ptr + process->size)
-    // FLAGS
+    
+    /* Map the process memory - Map a whole range:
+      Page Directory :  process->task->page_directory->directory_entry
+      Virtual address : (PLUMOS_PROGRAM_VIRTUAL_ADDRESS + process->size) 
+      Physical address: process->ptr , pointer to physical memory, where we loaded the program to
+      Physical address end : (process->ptr + process->size)
+      FLAGS : PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE
+    */
     paging_map_to(process->task->page_directory, (void*)PLUMOS_PROGRAM_VIRTUAL_ADDRESS, process->ptr,
         paging_align_address(process->ptr + process->size), PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE);
     return res;
 }
 
-// Map the process/program Memory
+// Map the ELF program/process
+static int process_map_elf(struct process* process)
+{
+    int res = 0;
+    struct elf_file* elf_file = process->elf_file;
+    struct elf_header* header = elf_header(elf_file);
+    struct elf32_phdr* phdrs = elf_pheader(header);
+    
+    /* Loop on all Program Headers:
+       Get the virtual and physcal addresses, flags from the program headers in the elf
+       Map the memory of the program headers
+    */
+    for (int i = 0; i < header->e_phnum; ++i) {
+        
+        struct elf32_phdr* phdr = &phdrs[i];
+        // Program Header physical address
+        void* phdr_phys_address = elf_phdr_phys_address(elf_file, phdr); // calculate the phys address
+        int flags = PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL;
+        if (phdr->p_flags & PF_W) {
+            // Program Header has a Write flag
+            flags |= PAGING_IS_WRITEABLE;
+        }
+
+        /* Map the process memory - Map a whole range: 
+        Page Directory :  process->task->page_directory->directory_entry
+        Virtual address: phdr->p_vaddr (program header virtual address)
+        Physical address: phdr_phys_address - pointer to physical memory, where we loaded the program to
+        physical end address: phdr_phys_address + phdr->p_filesz (program header phys addr + program header size)
+        Flags: PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE
+        */
+        res = paging_map_to(process->task->page_directory, paging_align_to_lower_page((void*)phdr->p_vaddr),
+        paging_align_to_lower_page(phdr_phys_address), paging_align_address(phdr_phys_address + phdr->p_filesz),
+        flags);
+
+        if (ISERR(res)) {
+            break;
+        }
+    }
+
+    return res;
+}
+
+// Map the process/program Memory based on its type (binary/elf)
 int process_map_memory(struct process* process)
 {
     int res = 0;
-    // process is a binary file
-    res = process_map_binary(process);
+    
+    switch(process->filetype) {
+        case PROCESS_FILETYPE_ELF:
+            res = process_map_elf(process);
+        break;
+        case PROCESS_FILETYPE_BINARY:
+            // process is a binary file
+            res = process_map_binary(process);
+        break;
+        default:
+            panic("PANIC: Process map memory invalid filetype");
+    }
 
     if (res < 0) {
         goto out;
     }
 
-    // Map the task's stack
+    // Map the task's Stack
     // Stacks grows downwards, so map from the end of the stack
     // physical address of the task's stack: process->stack
     paging_map_to(process->task->page_directory, (void*)PLUMOS_PROGRAM_VIRTUAL_STACK_ADDRESS_END, process->stack
@@ -183,8 +262,8 @@ int process_load_for_slot(const char* filename, struct process** process, int pr
 
     process_init(_process);
 
-    // looks at the file (if its bin/exe ..) and responsible for loading the data:
-    // Setting _process->ptr (program ptr)
+    // looks at the file (if its bin/elf ..) and load the data:
+    // Setting _process->ptr (program pointer)
     // Setting _process->size (size of program)
     res = process_load_data(filename, _process);
     if (res < 0) {
@@ -203,7 +282,7 @@ int process_load_for_slot(const char* filename, struct process** process, int pr
     _process->stack = program_stack_ptr;
     _process->id = process_slot;
 
-    // Create a task
+    // Create a task from the process
     task = task_new(_process);
     if (ERROR_I(task) == 0) {
         res = ERROR_I(task);

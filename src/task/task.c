@@ -7,6 +7,7 @@
 #include "memory/heap/kheap.h"
 #include "idt/idt.h"
 #include "string/string.h"
+#include "loader/formats/elfloader.h"
 
 // The current task that is running
 struct task* current_task = 0;
@@ -246,6 +247,11 @@ int task_init(struct task* task, struct process* process)
     // Its acceptable since each task has its different page_directory (each task maps the virtual addresses on its own)
     // Set the IP, Data/Stack Segment, Code Segment and Stack Pointer
     task->registers.ip = PLUMOS_PROGRAM_VIRTUAL_ADDRESS;
+    if (process->filetype == PROCESS_FILETYPE_ELF) {
+        // If the program is elf file, get the rip from the elf info
+        // e_entry is the virtual address of the begining of the program
+        task->registers.ip = elf_header(process->elf_file)->e_entry;
+    }
     task->registers.ss = USER_DATA_SEGMENT;
     task->registers.cs = USER_CODE_SEGMENT;
     task->registers.esp = PLUMOS_PROGRAM_VIRTUAL_STACK_ADDRESS_START;

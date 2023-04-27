@@ -196,9 +196,9 @@ void kernel_main()
     // load user program blank.bin from drive 0 that we already prepared in the Makefile: sudo cp ./programs/blank/blank.bin /mnt/d
     // This will transit to ring3 (user space)
     struct process* process = 0;
-    int res = process_load_switch("0:/blank.bin", &process);
+    int res = process_load_switch("0:/blank.elf", &process);
     if (res != PLUMOS_ALL_OK) {
-        panic("PANIC: Failed to load blank.bin");
+        panic("PANIC: Failed to load blank.elf");
     }
 
     task_run_first_ever_task();
