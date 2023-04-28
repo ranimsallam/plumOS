@@ -193,10 +193,10 @@ void kernel_main()
     // No need to enable it, we enabled interrupts when we tranitioned to user space (task.asm)
     // enable_interrupts();
 
-    // load user program blank.bin from drive 0 that we already prepared in the Makefile: sudo cp ./programs/blank/blank.bin /mnt/d
+    // load user program shell.elf from drive 0 that we already prepared in the Makefile: sudo cp ./programs/shell/shell.elf /mnt/d
     // This will transit to ring3 (user space)
     struct process* process = 0;
-    int res = process_load_switch("0:/blank.elf", &process);
+    int res = process_load_switch("0:/shell.elf", &process);
     if (res != PLUMOS_ALL_OK) {
         panic("PANIC: Failed to load blank.elf");
     }

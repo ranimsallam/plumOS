@@ -231,6 +231,7 @@ int elf_load(const char* filename, struct elf_file** file_out)
     int fd = 0;
     int res = fopen(filename, "r");
     if (res <= 0) {
+        res = -EIO;
         goto out;
     }
     fd = res;
@@ -260,7 +261,7 @@ int elf_load(const char* filename, struct elf_file** file_out)
 
 out:
     fclose(fd);
-    return 0;
+    return res;
 }
 
 // Close ELF file

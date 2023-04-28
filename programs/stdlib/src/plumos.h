@@ -23,5 +23,7 @@ void plumos_terminal_readline(char* out, int max, bool output_while_typing);
 void* plumos_malloc(size_t size);
 void plumos_free(void* ptr);
 
+void plumos_process_load_start(const char* filename);
+
 
 #endif // PLUMOS_H

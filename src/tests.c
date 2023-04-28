@@ -834,6 +834,132 @@ $1 = (void *) 0x1819000
 
 */
 
+/* plumos_terminal_readline
+
+int main(int argc, char** argv)
+{
+    printf("Hey, This is printf. Im %i\n", 32);
+    print("Hello, how are you\n");
+    print(itoa(8765));
+
+    putchar('Z');
+
+    void* ptr = malloc(512);
+    free(ptr);
+    
+    plumos_getkeyblock();
+
+    print("Hello World! 2\n");
+
+    char buf[1024];
+    plumos_terminal_readline(buf, sizeof(buf), true);
+
+    print(buf);
+
+    while(1) { }
+    return 0;
+}
+
+make clean
+./build
+cd bin
+qemu-system-i386 -hda ./os.bin
+*/
+
+
+/*
+    Running another process from the shell:
+    Running blank.elf from the shell
+
+    In shell.c:
+    int main(int argc, char** argv)
+    {
+        print("PlumOS v1.0.0\n");
+
+        while(1)
+        {
+            print("> ");
+            char buf[1024];
+            // Get commands from user - (read a whole line from terminal until user pressed 'Enter')
+            plumos_terminal_readline(buf, sizeof(buf), true);
+
+            // Load buf as a new process and switch to it (buf is the filename to load and it will be printed by the user in the terminal)
+            plumos_process_load_start(buf);
+
+            print("\n");
+        }
+
+        return 0;
+    }
+
+    In blank.c:
+    int main(int argc, char** argv)
+    {
+        printf("Hey, This is printf from blank.c -  Im %i\n", 32);
+
+        while(1) { }
+        return 0;
+    }
+
+make clean
+./build.sh
+cd bin
+qemu-system-i386 -hda ./os.bin
+
+This loads shell.elf, then in the window of qemu type: blank.elf to load and switch to blank.elf process
+You should see the printf message in blanl.c main()
+
+*/
+
+
+/*
+    strtok()
+
+    blank.c:
+    int main(int argc, char** argv)
+    {
+        //printf("Hey, This is printf from blank.c -  Im %i\n", 32);
+        char words[] = "hello how are you";
+        const char* token = strtok(words, " ");
+        while(token) {
+            printf("%s\n", token);
+            token = strtok(NULL, " ");
+        }
+
+        while(1) { }
+        return 0;
+    }
+
+make clean
+./build.sh
+cd bin
+qemu-system-i386 -hda ./os.bin
+
+*/
+
+/*
+    USer Space Malloc (allocate and map memory for user programs)
+    In blank.c
+    int main(int argc, char** argv)
+    {
+        //printf("Hey, This is printf from blank.c -  Im %i\n", 32);
+        char* ptr = malloc(20);
+        strcpy(ptr, "hello world");
+        print(ptr);
+
+        while(1) { }
+        return 0;
+    }
+
+make clean
+./build.sh
+cd bin
+qemu-system-i386 -hda ./os.bin
+
+In our shell in qemu run the blank program:
+blank.elf
+should see the print "hello world"
+*/
 
 // add-symbol-file ../build/kernelfull.o 0x100000
 // target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio

@@ -9,6 +9,7 @@ global plumos_getkey:function
 global plumos_putchar:function
 global plumos_malloc:function
 global plumos_free:function
+global plumos_process_load_start:function
 
 ; void print(const char* filename)
 print:
@@ -78,8 +79,24 @@ plumos_free:
     mov eax, 5  ; Command = 5 is free - Free the allocated memoery of this process
 
     push dword[ebp+8]   ; Get and Push the pointer to be freed (ptr)
-    int 0x80
+    int 0x80            ; Invoke the kernel interrupt
 
-    add esp, 4
+    add esp, 4  ; Restore the stack
     pop ebp
     ret
+
+; void plumos_process_load_start(const char* filename)
+plumos_process_load_start:
+    push ebp
+    mov ebp, esp
+
+    mov eax, 6  ; Command = 6 is load process and start - Start a process with task 'filename'
+    push dword[ebp+8]   ; Push the variable filename
+    int 0x80         ; Invoke the kernel interrupt
+
+    add esp, 4  ; Restore ethe stack
+    pop ebp
+    ret
+
+
+    

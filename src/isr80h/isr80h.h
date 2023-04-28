@@ -34,6 +34,7 @@ enum SystemCommands
     SYSTEM_COMMAND3_PUTCHAR,
     SYSTEM_COMMAND4_MALLOC,
     SYSTEM_COMMAND5_FREE,
+    SYSTEM_COMMAND6_PROCESS_LOAD_START,
 };
 
 // register all the isr80h commands

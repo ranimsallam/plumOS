@@ -56,7 +56,7 @@ fstat():
 Flow:
 User Program calls fopen("0:\hello.txt") (VFS::fopen)
 VFS::fopen(path):
-    disk = Get disk-id from path
+    disk = Get the disk from the disk-id from path
     filesystem = disk->filesystem (Get filesystem binded to the disk)
     call filesystem->open
         search the file in disk

@@ -21,6 +21,17 @@ Each task has:
     3. Processor the executes the task
     4. Pointer to the next task in the Linked list
     4. Pointer to the prev task in the Linkes list
+
+    Tranisition to User Space:
+    (task.asm task_return):
+    Accessing user land is done by 'faulting an interrupt', we push the registers into the stack, update the segment registers and call iret so the processor
+    will handle it as it was an interrupt: popping everything we pushed into the stack and transit to user space
+
+    Switching between tasks/process:
+    Switching  basically changing the registers value to the registers of the task we want to run.
+    Each task is binded to a process, and has memory pages on its own. 
+    All the tasks have the same starting virtual address but each task maps this virtual address to a different physical address (where the task program is loaded)
+
 */
 struct registers
 {
