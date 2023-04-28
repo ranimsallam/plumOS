@@ -15,6 +15,8 @@
             | Driver 0    |     | Driver 1    |          | Driver N    |
             |_____________|     |_____________|          |_____________|
 
+    
+    In keyboard_init() register the classic keyboard driver
 */
 
 // forward declaration

@@ -41,6 +41,77 @@ struct process* process_get(int process_id)
     return processes[process_id];
 }
 
+// Get a free entry in process->allocations array
+// Used when handling memory requests in order to save the process allocations
+static int process_find_free_allocation_index(struct process* process)
+{
+    int res = -ENOMEM;
+    for(int i = 0; i < PLUMOS_MAX_PROGRAM_ALLOCATIONS; ++i) {
+        if (process->allocations[i] == 0) {
+            // found a free entry in allocations array
+            res = i;
+            break;
+        }
+    }
+    return res;
+}
+
+// Malloc function to allocate memory requests from the process
+void* process_malloc(struct process* process, size_t size)
+{
+    void* ptr = kzalloc(size);
+    if (!ptr) {
+        // Error, return NULL
+        return 0;
+    }
+
+    int index = process_find_free_allocation_index(process);
+    if (index < 0) {
+        // Error, return NULL
+        return 0;
+    }
+
+    process->allocations[index] = ptr;
+    return ptr;
+}
+
+// Check if the pointer belongs to this process
+static bool process_is_process_ptr(struct process* process, void* ptr)
+{
+    for(int i = 0; i < PLUMOS_MAX_PROGRAM_ALLOCATIONS; ++i) {
+        if (process->allocations[i] == ptr) {
+            // ptr belong to this process, return true
+            return true;
+        }
+    }
+    return false;
+}
+
+// Mark the ptr as NULL in the process's allocations array
+static void process_allocation_unjoin(struct process* process, void* ptr)
+{
+    for(int i = 0; i < PLUMOS_MAX_PROGRAM_ALLOCATIONS; ++i) {
+         if (process->allocations[i] == ptr) {
+            process->allocations[i] = 0x00;
+         }
+    }
+}
+
+// Free ptr memory
+void process_free(struct process* process, void* ptr)
+{
+    // If the ptr DOESNT belong to process
+    if (!process_is_process_ptr(process, ptr)) {
+        // Cant free it
+        return;
+    }
+
+    // Mark the ptr as NULL in the process's allocations array
+    process_allocation_unjoin(process, ptr);
+    // Free the memory
+    kfree(ptr);
+}
+
 // Load binary file as a process (Process is a binary file)
 // The bin file includes the program that the process should execute
 static int process_load_binary(const char* filename, struct process* process)
@@ -163,7 +234,7 @@ static int process_map_elf(struct process* process)
         Flags: PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE
         */
         res = paging_map_to(process->task->page_directory, paging_align_to_lower_page((void*)phdr->p_vaddr),
-        paging_align_to_lower_page(phdr_phys_address), paging_align_address(phdr_phys_address + phdr->p_filesz),
+        paging_align_to_lower_page(phdr_phys_address), paging_align_address(phdr_phys_address + phdr->p_memsz),
         flags);
 
         if (ISERR(res)) {

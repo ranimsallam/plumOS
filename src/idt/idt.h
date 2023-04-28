@@ -3,6 +3,32 @@
 
 #include <stdint.h>
 
+/*
+    Register Interrupt handlers in IDT etnries based of interrupt vector
+    
+    In idt.asm create an interrupt entry for each interrupt.
+    Interrupt entry looks like this:
+        Push registers
+        Push stack pointer
+        Push interrupt vector
+        Call interrtup_handler
+        Restore stack pointer
+        Pop registers
+        iret
+
+
+    interrtup_handler takes 2 arguments that were pushed into the stack:
+        1. interrupt vector
+        2. stack frame
+    And does the below:
+        Switch to kernel pages
+        Save the stack frame that was passed as an argment (its the task state)
+        Call interrupt callback of interrupt vector
+        Switch to task pages
+        Send an acknowledgment to master PIC after handling the interrupt (Send 0x20 value to port 0x20)
+
+
+*/
 // forward declarations
 struct interrupt_frame;
 typedef void*(*ISR80H_COMMAND)(struct interrupt_frame* frame);

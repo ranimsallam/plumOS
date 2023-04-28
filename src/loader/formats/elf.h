@@ -147,7 +147,7 @@ struct elf32_phdr
     elf32_addr p_vaddr;
     elf32_addr p_paddr;
     elf32_word p_filesz;
-    elf32_word p_memsz;
+    elf32_word p_memsz; // This member gives the number of bytes in the memory image of the segment;
     elf32_word p_flags;
     elf32_word p_align;
 } __attribute__((packed));
