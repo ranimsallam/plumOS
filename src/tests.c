@@ -961,6 +961,54 @@ blank.elf
 should see the print "hello world"
 */
 
+/*
+    Passing args to blank.elf from shell
+
+    blank.c
+    int main(int argc, char** argv)
+    {
+        for (int i = 0; i < argc; ++i) {
+            printf("%s\n",argv[i]);
+        }
+        print("THIS WORKS");
+
+        while(1) { }
+        return 0;
+    }
+
+    shell.c
+    int main(int argc, char** argv)
+    {
+        print("PlumOS v1.0.0\n");
+
+        while(1)
+        {
+            print("> ");
+            char buf[1024];
+            // Get commands from user - (read a whole line from terminal until user pressed 'Enter')
+            plumos_terminal_readline(buf, sizeof(buf), true);
+            print("\n");
+            
+            // Run the system command
+            // buf is the command enterd in shell
+            plumos_system_run(buf);
+
+            print("\n");
+        }
+
+        return 0;
+    }
+
+make clean
+./build.sh
+cd bin
+qemu-system-i386 -hda ./os.bin
+
+In our shell in qemu run the blank program:
+blank.elf hello this is a grea dat
+should see the print of each argument after blank.elf
+
+*/
 // add-symbol-file ../build/kernelfull.o 0x100000
 // target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio
 

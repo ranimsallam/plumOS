@@ -198,8 +198,13 @@ void kernel_main()
     struct process* process = 0;
     int res = process_load_switch("0:/shell.elf", &process);
     if (res != PLUMOS_ALL_OK) {
-        panic("PANIC: Failed to load blank.elf");
+        panic("PANIC: Failed to load shell.elf");
     }
+
+    struct command_argument argument;
+    strcpy(argument.argument, "Testing");
+    argument.next = 0;
+    process_inject_arguments(process, &argument);
 
     task_run_first_ever_task();
 

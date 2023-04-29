@@ -267,7 +267,7 @@ void* task_get_stack_item(struct task* task, int index)
 {
     void* result = 0;
 
-    // Get the stack pointer to of the task
+    // Get the stack pointer (of the task's stack) - virtual address
     // we saved the task state when interrupt occurred, so we can get the task's stack virtual address
     uint32_t* sp_ptr = (uint32_t*)task->registers.esp;
 
@@ -281,4 +281,13 @@ void* task_get_stack_item(struct task* task, int index)
     kernel_page();
 
     return result;
+}
+
+void* task_virtual_address_to_physical(struct task* task, void* virtual_address)
+{
+    void* physical_address = 0;
+    // Grab the physical address (of the virutal_address) from the page table
+    physical_address = paging_get_phyiscal_address(task->page_directory->directory_entry, virtual_address);
+
+    return physical_address;
 }

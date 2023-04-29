@@ -1,6 +1,6 @@
 /* This is our linker script */
 ENTRY(_start) /* entry point is _start*/
-OUTPUT_FORMAT(elf32-i386) /* binary for binary format*/
+OUTPUT_FORMAT(elf32-i386) /* elf32 format*/
 SECTIONS
 {
     /*The linker creates addresses base on this origin*/
