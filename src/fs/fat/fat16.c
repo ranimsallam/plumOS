@@ -817,7 +817,7 @@ int fat16_stat(struct disk* disk, void* private, struct file_stat* stat)
     struct fat_file_descriptor* descriptor = (struct fat_file_descriptor*) private;
     struct fat_item* desc_item = descriptor->item;
     if (desc_item->type != FAT_ITEM_TYPE_FILE) {
-        // stat diecroties are not allowed
+        // stat direcroties are not allowed
         res = -EINVARG;
         goto out;
     }

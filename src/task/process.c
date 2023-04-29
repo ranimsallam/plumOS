@@ -47,7 +47,7 @@ static int process_find_free_allocation_index(struct process* process)
 {
     int res = -ENOMEM;
     for(int i = 0; i < PLUMOS_MAX_PROGRAM_ALLOCATIONS; ++i) {
-        if (process->allocations[i] == 0) {
+        if (process->allocations[i].ptr == 0) {
             // found a free entry in allocations array
             res = i;
             break;
@@ -56,7 +56,7 @@ static int process_find_free_allocation_index(struct process* process)
     return res;
 }
 
-// Malloc function to allocate memory requests from the process
+// Malloc function to allocate and map memory requests from the process
 void* process_malloc(struct process* process, size_t size)
 {
     void* ptr = kzalloc(size);
@@ -67,19 +67,29 @@ void* process_malloc(struct process* process, size_t size)
 
     int index = process_find_free_allocation_index(process);
     if (index < 0) {
-        // Error, return NULL
-        return 0;
+        goto out_err;
     }
 
-    process->allocations[index] = ptr;
+    // Map the memory page of ptr of ptr (phys: ptr -> virt: ptr)
+    int  res = paging_map_to(process->task->page_directory, ptr, ptr, paging_align_address(ptr+size), PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    if (res < 0) {
+        goto out_err;
+    }
+    process->allocations[index].ptr = ptr;
+    process->allocations[index].size = size;
     return ptr;
+
+out_err:
+    if (!ptr)
+        kfree(ptr);
+    return 0;
 }
 
 // Check if the pointer belongs to this process
 static bool process_is_process_ptr(struct process* process, void* ptr)
 {
-    for(int i = 0; i < PLUMOS_MAX_PROGRAM_ALLOCATIONS; ++i) {
-        if (process->allocations[i] == ptr) {
+    for (int i = 0; i < PLUMOS_MAX_PROGRAM_ALLOCATIONS; ++i) {
+        if (process->allocations[i].ptr == ptr) {
             // ptr belong to this process, return true
             return true;
         }
@@ -90,19 +100,38 @@ static bool process_is_process_ptr(struct process* process, void* ptr)
 // Mark the ptr as NULL in the process's allocations array
 static void process_allocation_unjoin(struct process* process, void* ptr)
 {
-    for(int i = 0; i < PLUMOS_MAX_PROGRAM_ALLOCATIONS; ++i) {
-         if (process->allocations[i] == ptr) {
-            process->allocations[i] = 0x00;
+    for (int i = 0; i < PLUMOS_MAX_PROGRAM_ALLOCATIONS; ++i) {
+         if (process->allocations[i].ptr == ptr) {
+            process->allocations[i].ptr = 0x00;
+            process->allocations[i].size = 0x00;
          }
     }
+}
+
+static struct process_allocation* process_get_allocation_by_address(struct process* process, void* addr)
+{
+    for (int i = 0; i <  PLUMOS_MAX_PROGRAM_ALLOCATIONS; ++i) {
+        if (process->allocations[i].ptr == addr) {
+            // Return the struct of the allocation with ptr == addr
+            return &process->allocations[i];
+        }
+    }
+    return 0;
 }
 
 // Free ptr memory
 void process_free(struct process* process, void* ptr)
 {
-    // If the ptr DOESNT belong to process
-    if (!process_is_process_ptr(process, ptr)) {
-        // Cant free it
+    struct process_allocation* allocation = process_get_allocation_by_address(process, ptr);
+    if (!allocation) {
+        // The ptr is not allocated in the memory of this process
+        return;
+    }
+
+    // Unmap the pages from the process of the given address
+    // This is done by changing the flag of the tables to 0x00
+    int res = paging_map_to(process->task->page_directory, allocation->ptr, allocation->ptr, paging_align_address(allocation->ptr + allocation->size), 0x00);
+    if (res < 0) {
         return;
     }
 

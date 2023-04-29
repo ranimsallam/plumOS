@@ -35,6 +35,7 @@ struct task* task_new(struct process* process)
         goto out;
     }
 
+    // Init the task registers
     res = task_init(task, process);
     if (res != PLUMOS_ALL_OK) {
         goto out;

@@ -8,18 +8,18 @@
 #include "config.h"
 
 /*
-    Array of all processors
+    Array of all processes
 
     ______________________________________________________________
    |             |              |                   |             |
-   | Processor 0 |  Processor 1 |        ...        | Processor N |
+   | Process   0 |  Process   1 |        ...        | Process   N |
    |_____________|______________|___________________|_____________|
 
-Each processor has:
-    1. processor id
-    2. filename: name of the file (bin/exe) that includes the program that the processor should execute
+Each process has:
+    1. process id
+    2. filename: name of the file (bin/exe) that includes the program that the process should execute
     3. task pointer, its the task that the process executes
-    4. Allocation array: track all the allocation that the process makes in order to free them at the end
+    4. Allocation array: track all the allocations that the process makes in order to free them at the end
     5. Pointer to the physical that the program is loaded to
     6. Pointer to the stack that the process uses to execute
     7. Size of the program's data ( the size of the bin file that was loaded to execute)
@@ -31,6 +31,13 @@ Each processor has:
 #define PROCESS_FILETYPE_BINARY 1
 
 typedef unsigned char PROCESS_FILETYPE;
+
+// Maintain the allocations by saving the ptr and size, in order to know how much memory we should free (unmap)
+struct process_allocation
+{
+    void* ptr;
+    size_t size;
+};
 
 // define how kernel see the process
 struct process
@@ -46,7 +53,7 @@ struct process
 
     // keep track of all the memory memalloc allocations that the process makes
     // this allow us to free all the allocations when the process will be terminated in order to avoid memory leak
-    void* allocations[PLUMOS_MAX_PROGRAM_ALLOCATIONS];
+    struct process_allocation allocations[PLUMOS_MAX_PROGRAM_ALLOCATIONS];
 
     // File type to load. Binary or ELF
     PROCESS_FILETYPE filetype;
