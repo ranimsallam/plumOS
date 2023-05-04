@@ -1,7 +1,61 @@
 #include "plumos.h"
+#include "string.h"
 
 #define BACKSPACE_KEY 0x08      // ASCII number of 'Backspace' key in keyboard
 #define CARRIEGE_RETURN_KEY 0x0D // ASCII number of 'Enter' key in keyboard
+
+// Parse the command into command arguments and return a linked-list of it
+// Return a linked-list of struct_argument: command->arg1->arg2..
+struct command_argument* plumos_parse_command(const char* command, int max)
+{
+    struct command_argument* root_command = 0;
+    char scommand[1025];
+    if (max >= (int)sizeof(scommand)) {
+        return 0;
+    }
+
+    // Copy the command into scommand
+    strncpy(scommand, command,sizeof(scommand));
+    
+    // Split the scommand by spaces
+    char* token = strtok(scommand, " ");
+    if (!token) {
+        goto out;
+    }
+
+    // Allcoate struct for the first command
+    root_command = plumos_malloc(sizeof(struct command_argument));
+    if (!root_command) {
+        goto out;
+    }
+
+    // Copy token (the first command) into root_command
+    strncpy(root_command->argument, token, sizeof(root_command->argument));
+    root_command->next = 0;
+
+    // Command arguments
+    struct command_argument* current = root_command;
+    // Split the scommand by spaces to get the arguments.
+    // Note: strtok uses global variable that saves the last string we sent to it (scommand), so sending NULL to strtok will continue splitting scommand
+    token = strtok(NULL, " ");
+    while(token != 0) {
+        struct command_argument* new_command = plumos_malloc(sizeof(struct command_argument));
+        if (!new_command) {
+            break;
+        }
+
+        strncpy(new_command->argument, token, sizeof(new_command->argument));
+        
+        // Add to linked-list
+        new_command->next = 0;
+        current->next = new_command;
+        current = new_command;
+        token = strtok(NULL, " ");
+    }
+
+out:
+    return root_command;
+}
 
 // Getkey and block (wait until a key is pressed)
 int plumos_getkeyblock()
@@ -53,4 +107,20 @@ void plumos_terminal_readline(char* out, int max, bool output_while_typing)
 
     // Add null terminator
     out[i] = 0x00;
+}
+
+// Run command from shell
+int plumos_system_run(const char* command)
+{
+    // Parse the command and get a linked-list of the command with all the args
+    char buf[1024];
+    strncpy(buf, command, sizeof(buf));
+    struct command_argument* root_command_argument = plumos_parse_command(buf, sizeof(buf));
+
+    if (!root_command_argument) {
+        return -1;
+    }
+
+    // call plumos_system - asm function the invokes the kernel with the commands adn arguments
+    return plumos_system(root_command_argument);
 }

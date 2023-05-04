@@ -1,12 +1,13 @@
 [BITS 32]
 
 global _start
-extern main
+extern c_start
 
 section .asm
 
-; _start calls main function and return
+; entrypoint is  _start (linker.ld)
+; _start calls c_start (start.c) function and return
 _start:
     ; can push args here (argc, argv)
-    call main
+    call c_start
     ret

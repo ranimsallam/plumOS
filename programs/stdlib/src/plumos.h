@@ -14,6 +14,22 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+// Linked list of command arguments
+struct command_argument
+{
+    char argument[512];
+    struct command_argument* next;
+};
+
+// Arguments of the process
+struct process_arguments
+{
+    int argc;
+    char** argv;
+};
+
+struct command_argument* plumos_parse_command(const char* command, int max);
+
 void print(const char* filename);
 int plumos_getkeyblock();
 int plumos_getkey();
@@ -24,6 +40,14 @@ void* plumos_malloc(size_t size);
 void plumos_free(void* ptr);
 
 void plumos_process_load_start(const char* filename);
+
+// Run system command based on arguments
+int plumos_system(struct command_argument* arguments);
+// Run command from shell - calls plumos_system(command)
+int plumos_system_run(const char* command);
+
+// Get the arguments (argc,argv)
+void plumos_process_get_arguments(struct process_arguments* arguments);
 
 
 #endif // PLUMOS_H

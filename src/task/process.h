@@ -24,6 +24,7 @@ Each process has:
     6. Pointer to the stack that the process uses to execute
     7. Size of the program's data ( the size of the bin file that was loaded to execute)
     8. Keyboard Buffer: Queue for the process to store keyboard inputs
+    9. Arguments of the process (argc, argv) - used to return arguments when invoking kernel command
 
 */
 
@@ -31,6 +32,20 @@ Each process has:
 #define PROCESS_FILETYPE_BINARY 1
 
 typedef unsigned char PROCESS_FILETYPE;
+
+// Linked list of command arguments
+struct command_argument
+{
+    char argument[512];
+    struct command_argument* next;
+};
+
+// Arguments of the process
+struct process_arguments
+{
+    int argc;
+    char** argv;
+};
 
 // Maintain the allocations by saving the ptr and size, in order to know how much memory we should free (unmap)
 struct process_allocation
@@ -78,6 +93,9 @@ struct process
         int tail;
         int head;
     } keyboard;
+
+    // Arguments of the process
+    struct process_arguments arguments;
 };
 
 struct process* process_current();
@@ -88,5 +106,8 @@ int process_load(const char* filename, struct process** process);
 
 void* process_malloc(struct process* process, size_t size);
 void process_free(struct process* process, void* ptr);
+
+void process_get_arguments(struct process* process, int* argc, char*** argv);
+int process_inject_arguments(struct process* process, struct command_argument* root_argument);
 
 #endif // PROCESS_H

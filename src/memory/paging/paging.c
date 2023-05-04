@@ -208,7 +208,7 @@ out:
     return res;
 }
 
-// return the physcal address of virt
+// Return the physcal address of virt
 uint32_t paging_get(uint32_t* directory, void* virt)
 {
     uint32_t directory_index = 0;
@@ -217,4 +217,13 @@ uint32_t paging_get(uint32_t* directory, void* virt)
     uint32_t entry = directory[directory_index];
     uint32_t* table = (uint32_t*)(entry & 0xfffff000);
     return table[table_index];
+}
+
+// Get physical address from virtual
+// Get the physical base page of virt, calculate the offset and return physical_address = (physical base + offset)
+void* paging_get_phyiscal_address(uint32_t* directory, void* virt)
+{
+    void* virt_addr_new = (void*)paging_align_to_lower_page(virt);
+    void* offset = (void*)( (uint32_t) virt - (uint32_t) virt_addr_new);
+    return (void*)((paging_get(directory, virt_addr_new) & 0xfffff000) + offset);
 }
