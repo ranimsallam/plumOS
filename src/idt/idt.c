@@ -5,6 +5,7 @@
 #include "io/io.h"
 #include "status.h"
 #include "task/task.h"
+#include "task/process.h"
 
 struct idt_desc idt_descriptors[PLUMOS_TOTAL_INTERRUPTS];
 struct idtr_desc idtr_descriptor;
@@ -62,6 +63,8 @@ void set_no_interrupt_handlers()
     }
 }
 
+// Interrupt Handler
+// Get the interrupt vector and stack frame, and call the approperiate interrupt callback
 void interrupt_handler(int interrupt, struct interrupt_frame* frame)
 {
     kernel_page();
@@ -84,6 +87,29 @@ void idt_zero()
     print("Error: Divinding By Zero\n");
 }
 
+void idt_handle_exception()
+{
+    // Terminate the process of the current task which got the exception
+    process_terminate(task_current()->process);
+    
+    // After terminating the process we cant do return
+    // Grab the next task and drop the privilege level back to user space
+    task_next();
+}
+
+// Clock handler - interrupt 0x20
+// Swtich tasks on each clock for MULTITASKING
+void idt_clock()
+{
+    // Send acknowledgement before switching to the next task since switching to next task will not return to here in order to send the acknowledgement
+    // send an acknoledgement to master PIC after handling the interrupt
+    // acknoledgement is done by sending value 0x20 to port 0x20 (port of master APIC)
+    outb(0x20, 0x20);
+
+    // Switch to next task
+    task_next();
+}
+
 void idt_init()
 {
     // initialize all descriptors to NULL
@@ -91,12 +117,13 @@ void idt_init()
     idtr_descriptor.limit = sizeof(idt_descriptors)-1;    // IDTR.limit = size of IDT-1
     idtr_descriptor.base =  (uint32_t)idt_descriptors;   // IDTR.base = linear address where IDT starts (INT 0)
 
+    // Fill IDT with handlers
     for(int i = 0; i < PLUMOS_TOTAL_INTERRUPTS; ++i) {
         idt_set(i, interrupt_pointer_table[i]);
     }
 
     // set IDT entry for interrupt 0
-    idt_set(0, idt_zero);
+    // idt_set(0, idt_zero);
     
     // interrupt 0x20 is the timer interrupt after we remap the IRQs to address 0x20
     // idt_set(0x20, int21h);
@@ -106,6 +133,15 @@ void idt_init()
     
     // set 0x80 entry to be interrupt for kernel commands
     idt_set(0x80, isr80h_wrapper);
+
+    // Register all the exceptions handlers
+    // All the exceptions vectors are below 0x20
+    for (int i = 0; i < 0x20; ++i) {
+        idt_register_interrupt_callback(i, idt_handle_exception);
+    }
+
+    // 0x20 is the interrupt of the timer clock
+    idt_register_interrupt_callback(0x20, idt_clock);
 
     // Load IDT
     idt_load(&idtr_descriptor);

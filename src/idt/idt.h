@@ -11,24 +11,28 @@
         Push registers
         Push stack pointer
         Push interrupt vector
-        Call interrtup_handler
+        Call interrupt_handler
         Restore stack pointer
         Pop registers
         iret
 
 
-    interrtup_handler takes 2 arguments that were pushed into the stack:
+    interrupt_handler takes 2 arguments that were pushed into the stack:
         1. interrupt vector
         2. stack frame
     And does the below:
         Switch to kernel pages
-        Save the stack frame that was passed as an argment (its the task state)
+        Save the stack frame that was passed as an argument (its the task state)
         Call interrupt callback of interrupt vector
         Switch to task pages
         Send an acknowledgment to master PIC after handling the interrupt (Send 0x20 value to port 0x20)
 
-
+    Multitasking is implemented by the clock interrupt.
+    Each time the clock interrupt occurs we switch process.
+    This is done by register idt_clock() as handler for interrupt 0x20 (clock interrupt)
+    and idt_clock() acknowledge the interrupt and calls task_switch
 */
+
 // forward declarations
 struct interrupt_frame;
 typedef void*(*ISR80H_COMMAND)(struct interrupt_frame* frame);
