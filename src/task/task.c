@@ -100,6 +100,7 @@ static void task_list_remove(struct task* task)
     }
 }
 
+// Remove the pages of the task and remove it from the tasks list
 int task_free(struct task* task)
 {
     paging_free_4gb(task->page_directory);
@@ -108,6 +109,20 @@ int task_free(struct task* task)
     // free the task
     kfree(task);
     return 0;
+}
+
+// Grab the next task and drop the privilege level back to user space
+void task_next()
+{
+    struct task* next_task = task_get_next();
+    if (!next_task) {
+        panic("task.c: task_next: No more tasks\n");
+    }
+
+    // Swtich to next task
+    task_switch(next_task);
+    // Transit to user land and execute the task (with its registers)
+    task_return(&next_task->registers);
 }
 
 // Switch the current task to task

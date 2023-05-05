@@ -119,7 +119,105 @@ static struct process_allocation* process_get_allocation_by_address(struct proce
     return 0;
 }
 
-// Get process arguments argc and argv
+// Terminate all the allocations of the process
+// Unmap the memory and free it
+int process_terminate_allocations(struct process* process)
+{
+    for (int i = 0; i < PLUMOS_MAX_PROGRAM_ALLOCATIONS; ++i) {
+        // Unmap the memory of process->allocations[i], mark process->allocations[i] as NULL, and free it 
+        process_free(process, process->allocations[i].ptr);
+    }
+    return 0;
+}
+
+// Free data of binary program
+int process_free_binary_data(struct process* process)
+{
+    kfree(process->ptr);
+    return 0;
+}
+
+// Free data of elf program by closing the elf file and free the memory
+int process_free_elf_data(struct process* process)
+{
+    // Close the elf file and free the memory
+    elf_close(process->elf_file);
+    return 0;
+}
+
+// Free program data based on the filetype (bin/elf)
+int process_free_program_data(struct process* process)
+{
+    int res = 0;
+    switch(process->filetype) {
+        case PROCESS_FILETYPE_BINARY:
+            res = process_free_binary_data(process);
+        break;
+
+        case PROCESS_FILETYPE_ELF:
+            res = process_free_elf_data(process);
+        break;
+
+        default:
+            res = -EINVARG;
+    }
+    return res;
+}
+
+void process_swtich_to_any()
+{
+    for (int i = 0; i < PLUMOS_MAX_PROCESSES; ++i) {
+        if (processes[i]) {
+            process_switch(processes[i]);
+            return;
+        }
+    }
+
+    panic("PANIC: process_swtich_to_any: no process to switch to\n");
+}
+
+// Remove the process from the processes array
+static void process_unlink(struct process* process)
+{
+    processes[process->id] = 0x00;
+
+    // If we are removing the current process, change the current process
+    if (current_process == process) {
+        process_swtich_to_any();
+    }
+}
+
+// Terminate the process
+int process_terminate(struct process* process)
+{
+    int res = 0;
+    // Terminate all the allocations of the process
+    res = process_terminate_allocations(process);
+    if (res < 0) {
+        goto out;
+    }
+
+    // Free the program data
+    res = process_free_program_data(process);
+    if (res < 0) {
+        goto out;
+    }
+
+    // Free the stack
+    kfree(process->stack);
+
+    // Free the task
+    task_free(process->task);
+    
+    // Remove the process from the processes array
+    process_unlink(process);
+
+    //print("Process was terminated\n");
+out:
+    return res;
+}
+
+// Get process arguments argc and argv and return them in arc, argv
 void process_get_arguments(struct process* process, int* argc, char*** argv)
 {
     *argc = process->arguments.argc;
@@ -180,6 +278,7 @@ out:
 }
 
 // Free ptr memory
+// Unmap the memory of ptr, mark ptr as NULL, and free it 
 void process_free(struct process* process, void* ptr)
 {
     struct process_allocation* allocation = process_get_allocation_by_address(process, ptr);
@@ -206,6 +305,7 @@ void process_free(struct process* process, void* ptr)
 static int process_load_binary(const char* filename, struct process* process)
 {
     int res = 0;
+    void* program_data_ptr = 0x00;
     
     // Open the file, which is a program (bin file)
     int fd = fopen(filename, "r");
@@ -221,7 +321,7 @@ static int process_load_binary(const char* filename, struct process* process)
         goto out;
     }
 
-    void* program_data_ptr = kzalloc(stat.filesize);
+    program_data_ptr = kzalloc(stat.filesize);
     if(!program_data_ptr) {
         res = -ENOMEM;
         goto out;
@@ -240,6 +340,13 @@ static int process_load_binary(const char* filename, struct process* process)
     process->size = stat.filesize;
 
 out:
+    // If error free the memory
+    if (res < 0) {
+        if (program_data_ptr) {
+            kfree(program_data_ptr);
+        }
+    }
+
     fclose(fd);
     return res;
 }

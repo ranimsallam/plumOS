@@ -12,6 +12,7 @@ global plumos_free:function
 global plumos_process_load_start:function
 global plumos_process_get_arguments:function
 global plumos_system:function
+global plumos_exit:function
 
 ; void print(const char* filename)
 print:
@@ -123,3 +124,13 @@ plumos_process_get_arguments:
     pop ebp
     ret
     
+; void plumos_exit()
+plumos_exit:
+    push ebp
+    mov ebp, esp
+
+    mov eax, 9          ; Command = 9 is exit command
+    int 0x80        ; Invoke the kernel
+
+    pop ebp
+    ret

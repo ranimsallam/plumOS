@@ -1009,6 +1009,68 @@ blank.elf hello this is a grea dat
 should see the print of each argument after blank.elf
 
 */
+
+/*
+    Terminate process
+
+    int blank.c
+
+    char* ptr = (char*) 0x00;
+    // dont have right acess to 0x00 - should crash
+    *ptr = 0x50;
+
+run qemu
+run blank.elf
+
+*/
+
+
+/*
+Multitasking:
+ load blank.elf into memory
+ inject arguments "Testing"
+ create a second process with blank.elf but inject argument "ABC"
+
+in kernel.c:
+ struct process* process = 0;
+   //int res = process_load_switch("0:/shell.elf", &process);
+    int res = process_load_switch("0:/blank.elf", &process);
+    if (res != PLUMOS_ALL_OK) {
+        panic("PANIC: Failed to load shell.elf");
+    }
+
+    struct command_argument argument;
+    strcpy(argument.argument, "B");
+    argument.next = 0;
+    process_inject_arguments(process, &argument);
+
+    // start a new process
+
+   //int res = process_load_switch("0:/shell.elf", &process);
+     res = process_load_switch("0:/blank.elf", &process);
+    if (res != PLUMOS_ALL_OK) {
+        panic("PANIC: Failed to load shell.elf");
+    }
+
+    strcpy(argument.argument, "A");
+    argument.next = 0;
+    process_inject_arguments(process, &argument);
+    // start a new process
+
+    task_run_first_ever_task();
+
+
+    print("\nend\n");
+    while(1){}
+
+and in blank.c print the argument
+while(1) {
+        print(argv[0]);
+    }
+
+run qemu and see that A and B are printed
+
+*/
 // add-symbol-file ../build/kernelfull.o 0x100000
 // target remote | qemu-system-i386 -hda ./os.bin -S -gdb stdio
 

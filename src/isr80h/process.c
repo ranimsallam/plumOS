@@ -86,6 +86,7 @@ void* isr80h_command7_invoke_system_command(struct interrupt_frame* frame)
 }
 
 // Get the command's arguments from the frame
+// Get the process of the current task and return from it the arguments
 void* isr80h_command8_get_program_arguments(struct interrupt_frame* frame)
 {
     struct process* process = task_current()->process;
@@ -94,5 +95,15 @@ void* isr80h_command8_get_program_arguments(struct interrupt_frame* frame)
 
     process_get_arguments(process, &arguments->argc, &arguments->argv);
 
+    return 0;
+}
+
+// Exit command
+// Terminate the process and switch to next task
+void* isr80h_command9_exit(struct interrupt_frame* frame)
+{
+    struct process* process = task_current()->process;
+    process_terminate(process);
+    task_next();
     return 0;
 }

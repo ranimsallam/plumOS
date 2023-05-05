@@ -83,7 +83,7 @@ no_interrupt:
 %rep 512
     interrupt i
 %assign i i+1
-%endrep 
+%endrep
 
 isr80h_wrapper:
     ; Interrupt Frame Start
@@ -108,9 +108,10 @@ section .data
 ; Inside here is stored the return result from isr80_handler - it needs to be in the data section
 tmp_res: dd 0
 
-; Fill interrupt_pointer_table array - this is array of pointer to interrupt handler: interrupt_pointer_table[i]= interrupt i (handler of interrpt i)
-; In macro interrupt 1 we created 512 interrupt handlers: interrupt 1 ... interrupt 512
-; Now we need to fill interrupt_pointer_table with these handlers by looping 512 under interrupt_pointer_table and fill each entry with
+; Fill interrupt_pointer_table array
+; This is array of pointer to interrupt handler: interrupt_pointer_table[i]= interrupt i (handler of interrpt i)
+; In macro 'interrupt 1' we created 512 interrupt handlers: interrupt 0 ... interrupt 511
+; Now we need to fill interrupt_pointer_table with these handlers by looping through interrupt_pointer_table and fill each entry with
 ; 'interrupt_array_entry i' which is the macro 'interrupt_array_entry i' that is defined by dd int%1
 ; int%1 is the macro of the interrupt handler i which is the address of interrupt handler i
 %macro interrupt_array_entry 1

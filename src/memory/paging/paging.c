@@ -118,6 +118,8 @@ int paging_set(uint32_t* directory, void* virt, uint32_t val)
     return res;
 }
 
+// Free the pages
+// Free the page tables, the directory and the chunk struct
 void paging_free_4gb(struct paging_4gb_chunk* chunk)
 {
     for (int i = 0; i < PAGING_TOTAL_ENTRIES_PER_TABLE; ++i) {

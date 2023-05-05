@@ -360,18 +360,24 @@ out:
 }
 
 // Remove spaces at the end of the filename and return the result in 'out'
-void fat16_to_proper_string(char** out, const char* in)
+void fat16_to_proper_string(char** out, const char* in, size_t size)
 {
+    int i = 0;
     // look for null terminator (\0) or space (0x20 in ASCII)
     while (*in != 0x00 && *in != 0x20) {
         **out = *in;
         *out += 1;
         in += 1;
+
+        if (i >= size-1) {
+            // Overflowed the size - cant process anymore
+            break;
+        }
+        i++;
     }
 
-    if (*in == 0x20) {
-        **out = 0x00;
-    }
+    // Append null terminator to the end of 'out'
+    **out = 0x00;
 }
 
 // Get the item's name (directory/file) and add to it its extension
@@ -380,12 +386,12 @@ void fat16_get_full_relative_filename(struct fat_directory_item* item, char* out
 {
     memset(out, 0x00, max_len);
     char *out_temp = out;
-    fat16_to_proper_string(&out_temp, (const char*)item->filename);
+    fat16_to_proper_string(&out_temp, (const char*)item->filename, sizeof(item->filename));
     if (item->ext[0] != 0x00 && item->ext[0] != 0x20) {
         // The file have extension
         // Append '.' + extension to the filename
         *out_temp++ = '.';
-        fat16_to_proper_string(&out_temp, (const char*)item->ext);
+        fat16_to_proper_string(&out_temp, (const char*)item->ext, sizeof(item->ext));
     }
 }
 

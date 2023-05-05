@@ -49,5 +49,7 @@ int plumos_system_run(const char* command);
 // Get the arguments (argc,argv)
 void plumos_process_get_arguments(struct process_arguments* arguments);
 
+// Exit command
+void plumos_exit();
 
 #endif // PLUMOS_H
